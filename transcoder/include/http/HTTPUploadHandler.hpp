@@ -2,8 +2,10 @@
 
 #include "drogon/drogon.h"
 
-namespace tr {
-    class HTTPUploadHandler : public drogon::HttpController<HTTPUploadHandler> {
+namespace tr
+{
+    class HTTPUploadHandler : public drogon::HttpController<HTTPUploadHandler>
+    {
     public:
         explicit HTTPUploadHandler();
         virtual ~HTTPUploadHandler();
@@ -16,5 +18,7 @@ namespace tr {
     public:
         void fileUpload(const drogon::HttpRequestPtr& req,
                         std::function<void(const drogon::HttpResponsePtr&)>&& callback);
+
+        void test();
     };
 };  // namespace tr

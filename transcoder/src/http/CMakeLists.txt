@@ -1,5 +1,5 @@
 set(SOURCES
-
+        HTTPUploadHandler.cpp
 )
 
 
