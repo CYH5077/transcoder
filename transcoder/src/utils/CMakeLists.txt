@@ -1,5 +1,6 @@
 set(SOURCES
         ArgParser.cpp
+        Config.cpp
 )
 
 

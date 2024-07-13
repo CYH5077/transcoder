@@ -2,16 +2,20 @@
 
 #include <string>
 
+#include "utils/Config.hpp"
+
 namespace tr {
     class Transcoder {
     public:
-        explicit Transcoder();
-        virtual ~Transcoder();
-
+        static Transcoder& getInstance();
+        static Transcoder instance;
 
     public:
         void start();
 
+    private:
+        explicit Transcoder();
+        virtual ~Transcoder();
 
     private:
         void printServerInfo();

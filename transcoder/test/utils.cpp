@@ -1,5 +1,4 @@
 #include "gtest/gtest.h"
-
 #include "utils/ArgParser.hpp"
 
 TEST(ArgParser_TEST, ArgParser_TEST) {
@@ -15,9 +14,9 @@ TEST(ArgParser_TEST, ArgParser_TEST) {
     tr::ArgParser::setFlagInt("-i", "int value", &intValue);
     tr::ArgParser::setFlagBool("-b", "bool value", &boolValue);
 
-    char *argv[] = {(char *) "test.exe",
-                    (char *) "-d",    (char *) "3.14", (char *) "-f",  (char *) "3.14", (char *) "-s",
-                    (char *) "hello", (char *) "-i",   (char *) "100", (char *) "-b",   (char *) "true"};
+    char* argv[] = {(char*)"test.exe", (char*)"-d", (char*)"3.14",  (char*)"-f",
+                    (char*)"3.14",     (char*)"-s", (char*)"hello", (char*)"-i",
+                    (char*)"100",      (char*)"-b", (char*)"true"};
 
     ASSERT_TRUE(tr::ArgParser::parse(10, argv));
 
@@ -29,7 +28,6 @@ TEST(ArgParser_TEST, ArgParser_TEST) {
 }
 
 TEST(ArgParser_TEST, HELP) {
-    char *argv[] = {(char *) "test.exe", (char *) "-h"};
+    char* argv[] = {(char*)"test.exe", (char*)"-h"};
     tr::ArgParser::parse(2, argv);
-
 }

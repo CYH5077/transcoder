@@ -1,0 +1,24 @@
+BasedOnStyle: Chromium
+IndentWidth: 4
+ColumnLimit: 100
+Standard: Cpp11
+
+AccessModifierOffset: -4
+BreakBeforeBraces: Attach
+AllowShortFunctionsOnASingleLine: Empty
+NamespaceIndentation: All
+FixNamespaceComments: false
+
+InsertBraces: true
+InsertNewlineAtEOF: true
+
+IncludeBlocks: Regroup
+IncludeCategories:
+  - Regex: '^<.*\.h>'
+    Priority: 1
+  - Regex: '^<.*'
+    Priority: 2
+  - Regex: '.*'
+    Priority: 3
+
+SortIncludes: true
