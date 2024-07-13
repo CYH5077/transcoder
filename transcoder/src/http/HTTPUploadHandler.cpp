@@ -13,8 +13,4 @@ namespace tr {
         resp->setBody("Hello, World!");
         callback(resp);
     }
-
-    void HTTPUploadHandler::test() {
-        std::cout << "tets" << std::endl;
-    }
 };

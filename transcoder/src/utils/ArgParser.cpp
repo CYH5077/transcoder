@@ -22,9 +22,7 @@ namespace tr {
         }
     }
 
-    void ArgParser::setFlagString(const std::string& flag,
-                                  const std::string& description,
-                                  std::string* str) {
+    void ArgParser::setFlagString(const std::string& flag, const std::string& description, std::string* str) {
         ArgParser::instance.helps[flag] = description;
         ArgParser::instance.arguments[flag] = std::make_tuple(TYPE::STRING, str);
     }
@@ -34,16 +32,12 @@ namespace tr {
         ArgParser::instance.arguments[flag] = std::make_tuple(TYPE::INT, i);
     }
 
-    void ArgParser::setFlagFloat(const std::string& flag,
-                                 const std::string& description,
-                                 float* f) {
+    void ArgParser::setFlagFloat(const std::string& flag, const std::string& description, float* f) {
         ArgParser::instance.helps[flag] = description;
         ArgParser::instance.arguments[flag] = std::make_tuple(TYPE::FLOAT, f);
     }
 
-    void ArgParser::setFlagDouble(const std::string& flag,
-                                  const std::string& description,
-                                  double* d) {
+    void ArgParser::setFlagDouble(const std::string& flag, const std::string& description, double* d) {
         ArgParser::instance.helps[flag] = description;
         ArgParser::instance.arguments[flag] = std::make_tuple(TYPE::DOUBLE, d);
     }

@@ -23,14 +23,10 @@ namespace tr {
     public:  // flags parse
         static void printHelp();
 
-        static void setFlagString(const std::string& flag,
-                                  const std::string& description,
-                                  std::string* str);
+        static void setFlagString(const std::string& flag, const std::string& description, std::string* str);
         static void setFlagInt(const std::string& flag, const std::string& description, int* i);
         static void setFlagFloat(const std::string& flag, const std::string& description, float* f);
-        static void setFlagDouble(const std::string& flag,
-                                  const std::string& description,
-                                  double* d);
+        static void setFlagDouble(const std::string& flag, const std::string& description, double* d);
         static void setFlagBool(const std::string& flag, const std::string& description, bool* b);
 
         static bool parse(int argc, char* argv[]);
