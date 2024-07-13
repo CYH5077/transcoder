@@ -8,7 +8,12 @@ namespace tr {
         explicit Transcoder();
         virtual ~Transcoder();
 
+
     public:
-        void printHelloWorld();
+        void start();
+
+
+    private:
+        void printServerInfo();
     };
 };

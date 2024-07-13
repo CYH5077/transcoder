@@ -1,5 +1,5 @@
 set(SOURCES
-
+        ArgParser.cpp
 )
 
 
@@ -9,4 +9,4 @@ foreach(SOURCE IN LISTS SOURCES)
 endforeach()
 
 
-target_sources(${TRANSCODER_LIB} PRIVATE ${UPDATED_SOURCES})
+target_sources(${PROJECT_NAME} PRIVATE ${UPDATED_SOURCES})

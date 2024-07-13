@@ -1,8 +1,9 @@
 #include "server/Transcoder.hpp"
 
-int main(void) {
+int main(int argc, char *argv[]) {
 	tr::Transcoder tr;
-    tr.printHelloWorld();
+
+	tr.start();
 
 	return 0; 
 }

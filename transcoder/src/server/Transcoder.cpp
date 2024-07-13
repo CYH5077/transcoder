@@ -7,12 +7,20 @@ namespace tr {
 
     }
 
+
     Transcoder::~Transcoder() {
 
     }
 
 
-    void Transcoder::printHelloWorld() {
-        std::cout << "Hello World!" << std::endl;
+    void Transcoder::printServerInfo() { 
+        std::cout << "==========================================" << std::endl;
+        std::cout << "= Transcoder Server Start                 " << std::endl;
+        std::cout << "==========================================" << std::endl;
+    }
+
+
+    void Transcoder::start() { 
+        this->printServerInfo();
     }
 };

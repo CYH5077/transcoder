@@ -1,5 +1,6 @@
 set(SOURCES
         main.cpp
+        utils.cpp
 )
 
 set(TRANSCODER_TEST transcoder_test)
@@ -10,7 +11,7 @@ enable_testing()
 add_test(AllTestsInMain main)
 
 find_package(GTest CONFIG REQUIRED)
-target_link_libraries(${TRANSCODER_TEST} PRIVATE ${TRANSCODER_LIB}
+target_link_libraries(${TRANSCODER_TEST} PRIVATE ${PROJECT_NAME}
                                                  GTest::gtest
                                                  GTest::gtest_main
                                                  GTest::gmock
