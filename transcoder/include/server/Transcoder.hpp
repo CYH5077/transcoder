@@ -2,7 +2,7 @@
 
 #include <string>
 
-#include "utils/Config.hpp"
+#include "server/Config.hpp"
 
 namespace tr {
     class Transcoder {
@@ -12,6 +12,7 @@ namespace tr {
 
     public:
         void start();
+        void stop();
 
     private:
         explicit Transcoder();

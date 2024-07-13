@@ -1,4 +1,4 @@
-#include "utils/Config.hpp"
+#include "server/Config.hpp"
 
 #include <thread>
 
@@ -11,7 +11,7 @@ namespace tr {
         return Config::instance;
     }
 
-    Config::Config() : port(0), threadNum(0) {}
+    Config::Config() : port(DEFAULT_PORT), threadNum(std::thread::hardware_concurrency()) {}
 
     Config::~Config() {}
 
@@ -24,7 +24,7 @@ namespace tr {
         }
 
         if (Config::instance.port == 0) {
-            Config::instance.port = 8080;
+            Config::instance.port = DEFAULT_PORT;
         }
 
         if (Config::instance.threadNum == 0) {

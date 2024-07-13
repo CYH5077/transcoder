@@ -1,5 +1,6 @@
 set(SOURCES
-        HTTPUploadHandler.cpp
+        HTTPFileHandler.cpp
+        HTTPWebSocketHandler.cpp
 )
 
 

@@ -1,5 +1,9 @@
 #pragma once
 
+#include <thread>
+
+#define DEFAULT_PORT 10000
+
 namespace tr {
     class Config {
     public:

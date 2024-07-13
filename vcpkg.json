@@ -22,6 +22,7 @@
     },
     "drogon",
     "boost",
-    "gtest"
+    "gtest",
+    "curl"
   ]
 }

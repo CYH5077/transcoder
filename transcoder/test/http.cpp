@@ -1,64 +1,150 @@
 #include <fstream>
 #include <iostream>
 
+#include "boost/beast.hpp"
+#include "drogon/WebSocketClient.h"
 #include "drogon/drogon.h"
 #include "gtest/gtest.h"
-#include "server/Transcoder.hpp"
+#include "server/Config.hpp"
+
+#ifdef __linux__
+#include <netinet/tcp.h>
+#include <sys/socket.h>
+#endif
+
+static std::string helloworldFile = "./helloworld.txt";
+
+void requestUploadFile(drogon::HttpClientPtr client);
+void requestGetFileList(drogon::HttpClientPtr client);
+void requestDownloadFile(drogon::HttpClientPtr client);
 
 TEST(HTTP_TEST, FILE_UPLOAD_DOWNLOAD) {
-    std::string helloworldFile = "./helloworld.txt";
-
     // helloworld.txt Write File
     std::ofstream file(helloworldFile);
     ASSERT_TRUE(file.is_open());
     file << "Hello World!!" << std::endl;
     file.close();
 
-    std::thread([] { drogon::app().run(); }).detach();
-    std::thread([]() {
-        std::this_thread::sleep_for(std::chrono::seconds(8));
-        std::cout << "app() stop" << std::endl;
-        drogon::app().quit();
-    }).detach();
+    // HTTP client
+    auto client = drogon::HttpClient::newHttpClient("http://127.0.0.1:10000");
+    client->setSockOptCallback([](int fd) {
+#ifdef __linux__
+        int optval = 10;
+        ::setsockopt(fd, SOL_TCP, TCP_KEEPCNT, &optval, static_cast<socklen_t>(sizeof optval));
+        ::setsockopt(fd, SOL_TCP, TCP_KEEPIDLE, &optval, static_cast<socklen_t>(sizeof optval));
+        ::setsockopt(fd, SOL_TCP, TCP_KEEPINTVL, &optval, static_cast<socklen_t>(sizeof optval));
+#endif
+    });
 
-    // 클라이언트 객체 생성
-    auto client = drogon::HttpClient::newHttpClient("http://localhost:8080");
+    requestUploadFile(client);
+    requestGetFileList(client);
+    requestDownloadFile(client);
+}
 
-    // 요청 객체 생성
-    drogon::UploadFile uploadFile(helloworldFile, "helloworld.txt");
-    std::vector<drogon::UploadFile> files = {uploadFile};
-    auto req = drogon::HttpRequest::newFileUploadRequest(files);
+TEST(HTTP_TEST, WS_TEST) {
+    boost::asio::io_context ioContext;
+    boost::asio::ip::tcp::resolver resolver(ioContext);
+    boost::beast::websocket::stream<boost::asio::ip::tcp::socket> webSocket(ioContext);
 
-    // 비동기 요청 전송
+    // 127.0.0.1:10000 으로 connect 한다.
+    boost::system::error_code error;
+    auto const results = resolver.resolve("127.0.0.1", "10000");
+
+    boost::asio::connect(webSocket.next_layer(), results, error);
+    ASSERT_FALSE(error);
+    webSocket.handshake("127.0.0.1", "/ws", error);
+    ASSERT_FALSE(error);
+    webSocket.write(boost::asio::buffer("Hello"), error);
+    ASSERT_FALSE(error);
+    std::cout << "Send Message" << std::endl;
+
+    boost::beast::flat_buffer buffer;
+    webSocket.read(buffer, error);
+    ASSERT_FALSE(error);
+    std::cout << "Recv Message: " << boost::beast::make_printable(buffer.data()) << std::endl;
+
+    webSocket.close(boost::beast::websocket::close_code::normal, error);
+    std::this_thread::sleep_for(std::chrono::seconds(1));
+}
+
+void requestUploadFile(drogon::HttpClientPtr client) {
+    // helloworld.txt UPLOAD
+    drogon::UploadFile fileUpload(helloworldFile);
+    auto req = drogon::HttpRequest::newFileUploadRequest({fileUpload});
+    req->setMethod(drogon::HttpMethod::Post);
+    req->setPath("/file");
     client->sendRequest(req, [](drogon::ReqResult result, const drogon::HttpResponsePtr& response) {
         if (result == drogon::ReqResult::Ok) {
-            std::cout << "파일 업로드 성공. 응답 상태 코드: " << response->getStatusCode() << std::endl;
-            std::cout << "서버 응답: " << response->getBody() << std::endl;
+            std::cout << "file upload success status code:" << response->getStatusCode() << std::endl;
         } else {
-            std::cout << "파일 업로드 실패" << std::endl;
+            std::cout << "file upload failed" << std::endl;
         }
-    }, 1);
+    });
 
+    std::this_thread::sleep_for(std::chrono::seconds(1));
 
-    std::this_thread::sleep_for(std::chrono::seconds(10));
-
-    // File Download
-    /*
-    drogon::HttpRequestPtr downloadRequest = drogon::HttpRequest::newHttpRequest("/download/helloworld.txt");
-    auto downloadResponse = client->sendRequest(downloadRequest);
-    ASSERT_EQ(downloadResponse->statusCode(), drogon::HttpStatusCode::k200OK);
-    std::string downloadedFilePath = "/path/to/download/directory/helloworld.txt";
-    downloadResponse->saveBody(downloadedFilePath);
-
-    // File Compare
-    std::ifstream uploadedFile(filePath);
-    std::ifstream downloadedFile(downloadedFilePath);
+    std::string uploadFilePath = drogon::app().getUploadPath() + "/" + helloworldFile;
+    std::cout << uploadFilePath << std::endl;
+    std::ifstream uploadedFile(uploadFilePath);
     ASSERT_TRUE(uploadedFile.is_open());
+}
+
+void requestGetFileList(drogon::HttpClientPtr client) {
+    // GET 요청 생성
+    auto req = drogon::HttpRequest::newHttpRequest();
+    req->setMethod(drogon::Get);
+    req->setPath("/file/list");
+    client->sendRequest(req, [](drogon::ReqResult result, const drogon::HttpResponsePtr& response) {
+        if (result != drogon::ReqResult::Ok) {
+            std::cerr << "Request failed: " << static_cast<int>(result) << std::endl;
+            drogon::app().quit();
+            return;
+        }
+
+        if (response->getStatusCode() == drogon::k200OK) {
+            auto json = response->getJsonObject();
+            if (json && (*json)["files"].isArray()) {
+                std::cout << "file list:" << std::endl;
+                for (const auto& file : (*json)["files"]) {
+                    std::cout << "- " << file.asString() << std::endl;
+                }
+            } else {
+                std::cerr << "Invalid json data" << std::endl;
+            }
+        } else {
+            std::cerr << "Server Error StatusCode: " << response->getStatusCode() << std::endl;
+            std::cerr << "Server Error ErrorMessage: " << response->body() << std::endl;
+        }
+    });
+    std::this_thread::sleep_for(std::chrono::seconds(1));
+}
+
+void requestDownloadFile(drogon::HttpClientPtr client) {
+    // helloworld.txt Download
+    Json::Value json;
+    json["file"] = helloworldFile;
+    auto req = drogon::HttpRequest::newHttpJsonRequest(json);
+    req->setPath("/file");
+    req->setMethod(drogon::Get);
+    client->sendRequest(req, [](drogon::ReqResult result, const drogon::HttpResponsePtr& response) {
+        if (result == drogon::ReqResult::Ok) {
+            if (response->getStatusCode() != drogon::k200OK) {
+                std::cerr << "Download failed Status code: " << response->getStatusCode() << std::endl;
+                std::cerr << "Download failed Error Message: " << response->body() << std::endl;
+                return;
+            }
+            auto body = response->getBody();
+            std::ofstream file("downloaded_file.txt", std::ios::binary);
+            file.write(body.data(), body.size());
+            file.close();
+            std::cout << "file download success!" << std::endl;
+        } else {
+            std::cout << "file download failed" << std::endl;
+        }
+    });
+    std::this_thread::sleep_for(std::chrono::seconds(1));
+
+    // downloaded_file.txt exist check
+    std::ifstream downloadedFile("downloaded_file.txt");
     ASSERT_TRUE(downloadedFile.is_open());
-    std::string uploadedContent((std::istreambuf_iterator<char>(uploadedFile)), std::istreambuf_iterator<char>());
-    std::string downloadedContent((std::istreambuf_iterator<char>(downloadedFile)), std::istreambuf_iterator<char>());
-    ASSERT_EQ(uploadedContent, downloadedContent);
-    uploadedFile.close();
-    downloadedFile.close();
-    */
 }

@@ -1,9 +1,7 @@
 BasedOnStyle: Chromium
-
 IndentWidth: 4
 TabWidth: 4
 UseTab: Never
-
 ColumnLimit: 120
 
 AccessModifierOffset: -4
@@ -25,3 +23,10 @@ IncludeCategories:
     Priority: 3
 
 SortIncludes: true
+
+# 람다 함수 정렬을 위한 추가 설정
+AlignAfterOpenBracket: AlwaysBreak
+BinPackArguments: false
+BinPackParameters: false
+AllowAllParametersOfDeclarationOnNextLine: false
+AllowAllArgumentsOnNextLine: false
