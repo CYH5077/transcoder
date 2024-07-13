@@ -1,6 +1,7 @@
 set(SOURCES
         main.cpp
         utils.cpp
+        http.cpp
 )
 
 set(TRANSCODER_TEST transcoder_test)
