@@ -6,9 +6,10 @@ namespace tr {
         int ret = 0;
         drogon::MultiPartParser multiPartParser;
 
+        auto response = drogon::HttpResponse::newHttpResponse();
+
         ret = multiPartParser.parse(req);
         if (ret != 0) {
-            auto response = drogon::HttpResponse::newHttpResponse();
             response->setStatusCode(drogon::HttpStatusCode::k400BadRequest);
             response->setBody("Bad Request");
             callback(response);
@@ -25,7 +26,6 @@ namespace tr {
 
             int ret = file.save();
             if (ret != 0) {
-                auto response = drogon::HttpResponse::newHttpResponse();
                 response->setStatusCode(drogon::HttpStatusCode::k500InternalServerError);
                 response->setBody("Internal Server Error");
                 callback(response);
@@ -33,7 +33,6 @@ namespace tr {
             }
         }
 
-        auto response = drogon::HttpResponse::newHttpResponse();
         response->setStatusCode(drogon::HttpStatusCode::k200OK);
         response->setBody("Upload Success");
         callback(response);
