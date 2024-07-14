@@ -1,7 +1,6 @@
 #include <fstream>
 #include <iostream>
 
-#include "boost/beast.hpp"
 #include "drogon/WebSocketClient.h"
 #include "drogon/drogon.h"
 #include "gtest/gtest.h"
@@ -27,14 +26,14 @@ TEST(HTTP_TEST, FILE_UPLOAD_DOWNLOAD) {
 
     // HTTP client
     auto client = drogon::HttpClient::newHttpClient("http://127.0.0.1:10000");
-    client->setSockOptCallback([](int fd) {
 #ifdef __linux__
+    client->setSockOptCallback([](int fd) {
         int optval = 10;
         ::setsockopt(fd, SOL_TCP, TCP_KEEPCNT, &optval, static_cast<socklen_t>(sizeof optval));
         ::setsockopt(fd, SOL_TCP, TCP_KEEPIDLE, &optval, static_cast<socklen_t>(sizeof optval));
         ::setsockopt(fd, SOL_TCP, TCP_KEEPINTVL, &optval, static_cast<socklen_t>(sizeof optval));
-#endif
     });
+#endif
 
     requestUploadFile(client);
     requestGetFileList(client);
@@ -42,29 +41,30 @@ TEST(HTTP_TEST, FILE_UPLOAD_DOWNLOAD) {
 }
 
 TEST(HTTP_TEST, WS_TEST) {
-    boost::asio::io_context ioContext;
-    boost::asio::ip::tcp::resolver resolver(ioContext);
-    boost::beast::websocket::stream<boost::asio::ip::tcp::socket> webSocket(ioContext);
+    // Websocket client
+    auto wsClient = drogon::WebSocketClient::newWebSocketClient("ws://127.0.0.1:10000");
+    wsClient->setMessageHandler([](const std::string& message,
+                                   const drogon::WebSocketClientPtr& wsPtr,
+                                   const drogon::WebSocketMessageType& type) {
+        std::cout << "Received message: " << message << std::endl;
+        wsPtr->getConnection()->forceClose();
+    });
 
-    // 127.0.0.1:10000 으로 connect 한다.
-    boost::system::error_code error;
-    auto const results = resolver.resolve("127.0.0.1", "10000");
+    auto request = drogon::HttpRequest::newHttpRequest();
+    request->setPath("/ws");
 
-    boost::asio::connect(webSocket.next_layer(), results, error);
-    ASSERT_FALSE(error);
-    webSocket.handshake("127.0.0.1", "/ws", error);
-    ASSERT_FALSE(error);
-    webSocket.write(boost::asio::buffer("Hello"), error);
-    ASSERT_FALSE(error);
-    std::cout << "Send Message" << std::endl;
+    wsClient->connectToServer(
+        request,
+        [](drogon::ReqResult result, const drogon::HttpResponsePtr& response, const drogon::WebSocketClientPtr& wsPtr) {
+            if (result == drogon::ReqResult::Ok) {
+                std::cout << "Connected to server" << std::endl;
+                wsPtr->getConnection()->send("Hello");
+            } else {
+                std::cerr << "Failed to connect to server" << std::endl;
+            }
+        });
 
-    boost::beast::flat_buffer buffer;
-    webSocket.read(buffer, error);
-    ASSERT_FALSE(error);
-    std::cout << "Recv Message: " << boost::beast::make_printable(buffer.data()) << std::endl;
-
-    webSocket.close(boost::beast::websocket::close_code::normal, error);
-    std::this_thread::sleep_for(std::chrono::seconds(1));
+    std::this_thread::sleep_for(std::chrono::seconds(2));
 }
 
 void requestUploadFile(drogon::HttpClientPtr client) {

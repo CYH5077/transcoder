@@ -20,9 +20,8 @@
         "x265"
       ]
     },
+
     "drogon",
-    "boost",
-    "gtest",
-    "curl"
+    "gtest"
   ]
 }

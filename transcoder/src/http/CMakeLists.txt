@@ -1,6 +1,12 @@
 set(SOURCES
         HTTPFileHandler.cpp
         HTTPWebSocketHandler.cpp
+
+        ws_recv_handler/WSRequestFilter.cpp
+        ws_recv_handler/WSRequestTask.cpp 
+        ws_recv_handler/WSRequestManager.cpp
+        ws_recv_handler/WSFileListTask.cpp
+        ws_recv_handler/WSClient.cpp
 )
 
 

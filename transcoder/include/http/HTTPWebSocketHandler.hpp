@@ -1,6 +1,5 @@
 #pragma once
 
-#include "HTTPWebSocketHandler.hpp"
 #include "drogon/WebSocketController.h"
 #include "drogon/drogon.h"
 
@@ -12,11 +11,12 @@ namespace tr {
         WS_PATH_LIST_END
 
     public:
-        void handleNewMessage(const drogon::WebSocketConnectionPtr&,
-                              std::string&&,
-                              const drogon::WebSocketMessageType&) override;
-        void handleConnectionClosed(const drogon::WebSocketConnectionPtr&) override;
-        void handleNewConnection(const drogon::HttpRequestPtr&, const drogon::WebSocketConnectionPtr&) override;
+        void handleNewMessage(const drogon::WebSocketConnectionPtr& conn,
+                              std::string&& message,
+                              const drogon::WebSocketMessageType& type) override;
+        void handleConnectionClosed(const drogon::WebSocketConnectionPtr& conn) override;
+        void handleNewConnection(const drogon::HttpRequestPtr& request,
+                                 const drogon::WebSocketConnectionPtr& conn) override;
 
     private:
         bool isRunning = false;
