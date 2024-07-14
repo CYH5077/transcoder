@@ -1,15 +1,20 @@
 #pragma once
 
+#include <memory>
+
 #include "drogon/drogon.h"
 
 namespace tr {
+    class DtoResponseJsonType;
+    using DtoResponseJsonTypePtr = std::shared_ptr<DtoResponseJsonType>;
+
     class DtoResponseJsonType {
     public:
-        explicit DtoResponseJsonType() = default;
+        explicit DtoResponseJsonType(const std::string& responseType);
         virtual ~DtoResponseJsonType() = default;
 
     public:
-        Json::Value toJson();
+        const Json::Value& toJson();
 
     protected:
         void addJson(const std::string& key, const std::string& value);
@@ -18,6 +23,8 @@ namespace tr {
         void addJsonObject(const std::string& key, const Json::Value& value);
 
     private:
+        std::string responseType;
+
         Json::Value json;
     };
 };

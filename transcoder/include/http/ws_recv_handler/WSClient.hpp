@@ -4,6 +4,7 @@
 
 #include "drogon/WebSocketController.h"
 #include "drogon/drogon.h"
+#include "dto/DtoResponseJsonType.hpp"
 
 namespace tr {
     class WSClient;
@@ -22,7 +23,7 @@ namespace tr {
         bool isConnected();
 
     public:  // send to client
-        void sendJson(std::shared_ptr<Json::Value> json);
+        void sendResponse(DtoResponseJsonTypePtr dto);
 
     private:
         bool connected;

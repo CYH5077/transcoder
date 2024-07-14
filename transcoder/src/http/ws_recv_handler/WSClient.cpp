@@ -15,9 +15,9 @@ namespace tr {
 		return this->connected;
 	}
 
-    void WSClient::sendJson(std::shared_ptr<Json::Value> json) {
+    void WSClient::sendResponse(DtoResponseJsonTypePtr dto) {
 		if (this->connected) {
-			this->conn->send(json->toStyledString());
+			this->conn->sendJson(dto->toJson());
 		}
 	}
 }

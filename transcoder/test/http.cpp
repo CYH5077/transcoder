@@ -58,7 +58,9 @@ TEST(HTTP_TEST, WS_TEST) {
         [](drogon::ReqResult result, const drogon::HttpResponsePtr& response, const drogon::WebSocketClientPtr& wsPtr) {
             if (result == drogon::ReqResult::Ok) {
                 std::cout << "Connected to server" << std::endl;
-                wsPtr->getConnection()->send("Hello");
+                Json::Value json;
+                json["task"] = "file_list";
+                wsPtr->getConnection()->send(json.toStyledString());
             } else {
                 std::cerr << "Failed to connect to server" << std::endl;
             }

@@ -4,6 +4,9 @@
 #include "http/ws_recv_handler/WSClient.hpp"
 
 namespace tr {
+    class WSRequestFilter;
+    using WSRequestFilterPtr = std::shared_ptr<WSRequestFilter>;
+
     class WSRequestFilter {
     public:
         explicit WSRequestFilter() = default;

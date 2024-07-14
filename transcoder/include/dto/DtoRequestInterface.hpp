@@ -17,6 +17,6 @@ namespace tr {
         virtual ~DtoRequestInterface() = default;
 
     public:
-        virtual void parseJson(const std::shared_ptr<Json::Value> json) = 0;
+        virtual bool parseJson(const std::shared_ptr<Json::Value> json) = 0;
     };
 }

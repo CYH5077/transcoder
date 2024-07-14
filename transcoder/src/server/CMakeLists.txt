@@ -1,5 +1,6 @@
 set(SOURCES
-    Transcoder.cpp
+        Transcoder.cpp
+        Config.cpp
 )
 
 

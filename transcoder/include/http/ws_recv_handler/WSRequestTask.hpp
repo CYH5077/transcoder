@@ -4,6 +4,9 @@
 #include "http/ws_recv_handler/WSClient.hpp"
 
 namespace tr {
+    class WSRequestTask;
+    using WSRequestTaskPtr = std::shared_ptr<WSRequestTask>;
+
     class WSRequestTask {
     public:
         explicit WSRequestTask(const std::string& taskType);

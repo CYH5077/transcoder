@@ -2,7 +2,8 @@
 
 
 namespace tr {
-	void DtoWSFileListRequest::parseJson(const std::shared_ptr<Json::Value> json) {
+	bool DtoWSFileListRequest::parseJson(const std::shared_ptr<Json::Value> json) {
 		
+		return true;
 	}
 };

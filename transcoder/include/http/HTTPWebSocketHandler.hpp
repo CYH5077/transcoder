@@ -1,7 +1,12 @@
 #pragma once
 
+#include <map>
+#include <mutex>
+
 #include "drogon/WebSocketController.h"
 #include "drogon/drogon.h"
+#include "http/ws_recv_handler/WSClient.hpp"
+#include "http/ws_recv_handler/WSRequestManager.hpp"
 
 namespace tr {
     class HTTPWebSocketHandler : public drogon::WebSocketController<HTTPWebSocketHandler> {
@@ -19,7 +24,9 @@ namespace tr {
                                  const drogon::WebSocketConnectionPtr& conn) override;
 
     private:
-        bool isRunning = false;
-        std::shared_ptr<std::thread> thread;
+        std::mutex clientsMutex;
+        std::map<const drogon::WebSocketConnectionPtr, WSClientPtr> clients;
+
+        WSRequestManager taskManager;
     };
 };

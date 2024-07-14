@@ -7,6 +7,7 @@ set(SOURCES
         ws_recv_handler/WSRequestManager.cpp
         ws_recv_handler/WSFileListTask.cpp
         ws_recv_handler/WSClient.cpp
+        ws_recv_handler/WSRequestManager.cpp
 )
 
 

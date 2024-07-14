@@ -6,9 +6,9 @@
 #include "dto/DtoResponseInterface.hpp"
 
 namespace tr {
-    class DtoWSFileListResponse : DtoResponseInterface<DtoWSFileListResponse> {
+    class DtoWSFileListResponse : public DtoResponseInterface<DtoWSFileListResponse> {
     public:
-        explicit DtoWSFileListResponse() = default;
+        explicit DtoWSFileListResponse();
         virtual ~DtoWSFileListResponse() = default;
 
     public:

@@ -14,7 +14,7 @@ namespace tr {
         }
 
     public:
-        explicit DtoResponseInterface() = default;
+        explicit DtoResponseInterface(const std::string& responseType) : DtoResponseJsonType(responseType) {}
         virtual ~DtoResponseInterface() = default;
     };
 };

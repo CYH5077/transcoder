@@ -1,11 +1,16 @@
 #include "dto/DtoResponseJsonType.hpp"
 
 namespace tr {
+    DtoResponseJsonType::DtoResponseJsonType(const std::string& responseType) {
+		this->json["type"] = responseType;
+	}
+
     void DtoResponseJsonType::addJson(const std::string& key, const std::string& value) {
         this->json[key] = value;
     }
 
     void DtoResponseJsonType::addJsonArray(const std::string& key, const std::vector<std::string>& value) {
+        this->json[key] = Json::Value(Json::arrayValue);
         for (const auto& v : value) {
             this->json[key].append(v);
         }
@@ -21,7 +26,7 @@ namespace tr {
         this->json[key] = value;
     }
 
-    Json::Value DtoResponseJsonType::toJson() {
+    const Json::Value& DtoResponseJsonType::toJson() {
         return this->json;
     }
 }
