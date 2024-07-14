@@ -35,9 +35,7 @@ namespace tr {
             if (Json::parseFromStream(jsonBuilder, iss, json.get(), &errors)) {
                 this->taskManager.run(client, json);
             } else {
-                auto response = DtoWSErrorResponse::create();
-                response->setErrorMessage("Invalid JSON format: " + errors);
-                client->sendResponse(response);
+                client->sendResponse(DtoWSErrorResponse::createErrorMessage("Invalid JSON format: " + errors));
             }
         }
     }

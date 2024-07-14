@@ -9,8 +9,10 @@ void requestDownloadFile(drogon::HttpClientPtr client);
 
 void jsonParse(const std::string& jsonStr, Json::Value* json);
 void wsRequestFileList();
+void wsRequestIntTypeError();
+void wsRequestInvalidType();
 
-// File upload test
+    // File upload test
 void requestUploadFile(drogon::HttpClientPtr client) {
     std::promise<bool> promise;
     std::future<bool> future = promise.get_future();
@@ -133,4 +135,101 @@ void jsonParse(const std::string& jsonStr, Json::Value* json) {
     std::istringstream iss(jsonStr);
 
     ASSERT_TRUE(Json::parseFromStream(jsonBuilder, iss, json, &errors));
+}
+
+
+void wsRequestIntTypeError() {
+	std::promise<bool> promise;
+	std::future<bool> future = promise.get_future();
+
+	// Websocket client
+	auto wsClient = drogon::WebSocketClient::newWebSocketClient(TRANSCODER_WEBSOCKET_URL);
+
+	// Recv message
+	wsClient->setMessageHandler([&](const std::string& message,
+									const drogon::WebSocketClientPtr& wsPtr,
+									const drogon::WebSocketMessageType& type) {
+		std::cout << "Received message: " << message << std::endl;
+		Json::Value json;
+		jsonParse(message, &json);
+		if (json["type"].asString() == "error") {
+			promise.set_value(true);
+		} else {
+			promise.set_value(false);
+		}
+	});
+
+	// HTTP Request
+	auto request = drogon::HttpRequest::newHttpRequest();
+	request->setPath("/ws");
+
+	// Connect
+	wsClient->connectToServer(request,
+							  [&](drogon::ReqResult result,
+								  const drogon::HttpResponsePtr& response,
+								  const drogon::WebSocketClientPtr& wsPtr) {
+								  if (result == drogon::ReqResult::Ok) {
+									  std::cout << "Connected to server" << std::endl;
+									  Json::Value json;
+                                      // =============== Invalid type ===============
+									  json["task"] = 100;
+									  wsPtr->getConnection()->send(json.toStyledString());
+								  } else {
+									  promise.set_value(false);
+									  std::cerr << "Failed to connect to server" << std::endl;
+								  }
+							  });
+
+	while (future.wait_for(std::chrono::seconds(5)) != std::future_status::ready) {
+		std::this_thread::sleep_for(std::chrono::milliseconds(200));
+	}
+	ASSERT_TRUE(future.get());
+}
+
+void wsRequestInvalidType() {
+    std::promise<bool> promise;
+    std::future<bool> future = promise.get_future();
+
+    // Websocket client
+    auto wsClient = drogon::WebSocketClient::newWebSocketClient(TRANSCODER_WEBSOCKET_URL);
+
+    // Recv message
+    wsClient->setMessageHandler([&](const std::string& message,
+                                    const drogon::WebSocketClientPtr& wsPtr,
+                                    const drogon::WebSocketMessageType& type) {
+        std::cout << "Received message: " << message << std::endl;
+        Json::Value json;
+        jsonParse(message, &json);
+        if (json["type"].asString() == "error") {
+            promise.set_value(true);
+        } else {
+            promise.set_value(false);
+        }
+    });
+
+    // HTTP Request
+    auto request = drogon::HttpRequest::newHttpRequest();
+    request->setPath("/ws");
+
+    // Connect
+    wsClient->connectToServer(request,
+                              [&](drogon::ReqResult result,
+                                  const drogon::HttpResponsePtr& response,
+                                  const drogon::WebSocketClientPtr& wsPtr) {
+                                  if (result == drogon::ReqResult::Ok) {
+                                      std::cout << "Connected to server" << std::endl;
+                                      Json::Value json;
+                                      // =============== Invalid type ===============
+                                      json["task"] = "this is error!";
+                                      wsPtr->getConnection()->send(json.toStyledString());
+                                  } else {
+                                      promise.set_value(false);
+                                      std::cerr << "Failed to connect to server" << std::endl;
+                                  }
+                              });
+
+    while (future.wait_for(std::chrono::seconds(5)) != std::future_status::ready) {
+        std::this_thread::sleep_for(std::chrono::milliseconds(200));
+    }
+    ASSERT_TRUE(future.get());
 }

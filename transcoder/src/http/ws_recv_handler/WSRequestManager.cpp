@@ -23,15 +23,19 @@ namespace tr {
             }
         }
 
-        std::string taskType = (*json)["task"].asString();
+        std::string taskType;
+        try {
+            taskType = (*json)["task"].asString();
+        } catch (Json::Exception& e) {
+            client->sendResponse(DtoWSErrorResponse::createErrorMessage("type is not string"));
+			return;
+		}
 
         // task
         if (this->tasks.find(taskType) != this->tasks.end()) {
             this->tasks[taskType]->task(client, json);
         } else {
-            auto response = DtoWSErrorResponse::create();
-            response->setErrorMessage("Invalid task type");
-            client->sendResponse(response);
+            client->sendResponse(DtoWSErrorResponse::createErrorMessage("Invalid task type"));
         }
     }
 

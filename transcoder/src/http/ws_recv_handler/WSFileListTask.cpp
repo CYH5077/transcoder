@@ -26,8 +26,7 @@ namespace tr {
             client->sendResponse(response);
 
         } catch (const std::filesystem::filesystem_error& e) {
-            auto response = DtoWSErrorResponse::create();
-            client->sendResponse(response);
+            client->sendResponse(DtoWSErrorResponse::createErrorMessage(e.what()));
         }
     }
 }

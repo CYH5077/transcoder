@@ -35,6 +35,14 @@ TEST(HTTP_TEST, FILE_UPLOAD_DOWNLOAD) {
     requestDownloadFile(client);
 }
 
-TEST(HTTP_TEST, WS_TEST) {
+TEST(HTTP_TEST, WS_FILE_LIST) {
     wsRequestFileList();
+}
+
+TEST(HTTP_TEST, WS_REQUEST_TYPE_ERROR_INT) {
+    wsRequestIntTypeError();
+}
+
+TEST(HTTP_TEST, WS_REQUEST_INVALID_TYPE_ERROR_STR) {
+    wsRequestInvalidType();
 }
