@@ -46,6 +46,7 @@ namespace tr {
         {
             std::lock_guard<std::mutex> lock(this->clientsMutex);
             WSClientPtr client = clients[conn];
+            client->stopAll();
             client->setConnect(false);
             clients.erase(conn);
         }

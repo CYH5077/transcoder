@@ -2,7 +2,9 @@
 
 namespace tr {
     WSClientPtr WSClient::create(drogon::WebSocketConnectionPtr conn) {
-        return std::make_shared<WSClient>(conn);
+        auto client = std::make_shared<WSClient>(conn);
+        client->setTranscodeThread(TranscodeThread::create(client));
+        return client;
     }
 
     WSClient::WSClient(drogon::WebSocketConnectionPtr conn) : conn(conn) {}
@@ -20,4 +22,17 @@ namespace tr {
 			this->conn->sendJson(dto->toJson());
 		}
 	}
+
+    void WSClient::setTranscodeThread(TranscodeThreadPtr transcodeThread) {
+        this->transcodeThread = transcodeThread;
+    }
+
+    void WSClient::transcodeStart(std::shared_ptr<ff::FFAVInputContext> inputContext,
+                                  DtoWSTranscodeRequestPtr request) {
+        this->transcodeThread->start(inputContext, request);
+    }
+
+    void WSClient::stopAll() {
+        this->transcodeThread->stop();
+    }
 }

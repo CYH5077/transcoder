@@ -3,6 +3,7 @@
 #define TRANSCODER_WEBSOCKET_URL std::string("ws://127.0.0.1:10000")
 #define TRANSCODER_HTTP_URL std::string("http://127.0.0.1:10000")
 #define HELLOWORLD_FILE std::string("helloworld.txt")
+#define SAMPLE_MP4 std::string("sample.mp4")
 
 void requestUploadFile(drogon::HttpClientPtr client);
 void requestDownloadFile(drogon::HttpClientPtr client);
@@ -11,8 +12,10 @@ void jsonParse(const std::string& jsonStr, Json::Value* json);
 void wsRequestFileList();
 void wsRequestIntTypeError();
 void wsRequestInvalidType();
+void wsRequestTranscodeError();
+void wsRequestTranscode();
 
-    // File upload test
+// File upload test
 void requestUploadFile(drogon::HttpClientPtr client) {
     std::promise<bool> promise;
     std::future<bool> future = promise.get_future();
@@ -137,53 +140,52 @@ void jsonParse(const std::string& jsonStr, Json::Value* json) {
     ASSERT_TRUE(Json::parseFromStream(jsonBuilder, iss, json, &errors));
 }
 
-
 void wsRequestIntTypeError() {
-	std::promise<bool> promise;
-	std::future<bool> future = promise.get_future();
+    std::promise<bool> promise;
+    std::future<bool> future = promise.get_future();
 
-	// Websocket client
-	auto wsClient = drogon::WebSocketClient::newWebSocketClient(TRANSCODER_WEBSOCKET_URL);
+    // Websocket client
+    auto wsClient = drogon::WebSocketClient::newWebSocketClient(TRANSCODER_WEBSOCKET_URL);
 
-	// Recv message
-	wsClient->setMessageHandler([&](const std::string& message,
-									const drogon::WebSocketClientPtr& wsPtr,
-									const drogon::WebSocketMessageType& type) {
-		std::cout << "Received message: " << message << std::endl;
-		Json::Value json;
-		jsonParse(message, &json);
-		if (json["type"].asString() == "error") {
-			promise.set_value(true);
-		} else {
-			promise.set_value(false);
-		}
-	});
+    // Recv message
+    wsClient->setMessageHandler([&](const std::string& message,
+                                    const drogon::WebSocketClientPtr& wsPtr,
+                                    const drogon::WebSocketMessageType& type) {
+        std::cout << "Received message: " << message << std::endl;
+        Json::Value json;
+        jsonParse(message, &json);
+        if (json["type"].asString() == "error") {
+            promise.set_value(true);
+        } else {
+            promise.set_value(false);
+        }
+    });
 
-	// HTTP Request
-	auto request = drogon::HttpRequest::newHttpRequest();
-	request->setPath("/ws");
+    // HTTP Request
+    auto request = drogon::HttpRequest::newHttpRequest();
+    request->setPath("/ws");
 
-	// Connect
-	wsClient->connectToServer(request,
-							  [&](drogon::ReqResult result,
-								  const drogon::HttpResponsePtr& response,
-								  const drogon::WebSocketClientPtr& wsPtr) {
-								  if (result == drogon::ReqResult::Ok) {
-									  std::cout << "Connected to server" << std::endl;
-									  Json::Value json;
+    // Connect
+    wsClient->connectToServer(request,
+                              [&](drogon::ReqResult result,
+                                  const drogon::HttpResponsePtr& response,
+                                  const drogon::WebSocketClientPtr& wsPtr) {
+                                  if (result == drogon::ReqResult::Ok) {
+                                      std::cout << "Connected to server" << std::endl;
+                                      Json::Value json;
                                       // =============== Invalid type ===============
-									  json["task"] = 100;
-									  wsPtr->getConnection()->send(json.toStyledString());
-								  } else {
-									  promise.set_value(false);
-									  std::cerr << "Failed to connect to server" << std::endl;
-								  }
-							  });
+                                      json["task"] = 100;
+                                      wsPtr->getConnection()->send(json.toStyledString());
+                                  } else {
+                                      promise.set_value(false);
+                                      std::cerr << "Failed to connect to server" << std::endl;
+                                  }
+                              });
 
-	while (future.wait_for(std::chrono::seconds(5)) != std::future_status::ready) {
-		std::this_thread::sleep_for(std::chrono::milliseconds(200));
-	}
-	ASSERT_TRUE(future.get());
+    while (future.wait_for(std::chrono::seconds(5)) != std::future_status::ready) {
+        std::this_thread::sleep_for(std::chrono::milliseconds(200));
+    }
+    ASSERT_TRUE(future.get());
 }
 
 void wsRequestInvalidType() {
@@ -221,6 +223,104 @@ void wsRequestInvalidType() {
                                       Json::Value json;
                                       // =============== Invalid type ===============
                                       json["task"] = "this is error!";
+                                      wsPtr->getConnection()->send(json.toStyledString());
+                                  } else {
+                                      promise.set_value(false);
+                                      std::cerr << "Failed to connect to server" << std::endl;
+                                  }
+                              });
+
+    while (future.wait_for(std::chrono::seconds(5)) != std::future_status::ready) {
+        std::this_thread::sleep_for(std::chrono::milliseconds(200));
+    }
+    ASSERT_TRUE(future.get());
+}
+
+void wsRequestTranscodeError() {
+    std::promise<bool> promise;
+    std::future<bool> future = promise.get_future();
+
+    // Websocket client
+    auto wsClient = drogon::WebSocketClient::newWebSocketClient(TRANSCODER_WEBSOCKET_URL);
+
+    // Recv message
+    wsClient->setMessageHandler([&](const std::string& message,
+                                    const drogon::WebSocketClientPtr& wsPtr,
+                                    const drogon::WebSocketMessageType& type) {
+        std::cout << "Received message: " << message << std::endl;
+        Json::Value json;
+        jsonParse(message, &json);
+        if (json["type"].asString() == "error") {
+            promise.set_value(true);
+        } else {
+            promise.set_value(false);
+        }
+    });
+
+    // HTTP Request
+    auto request = drogon::HttpRequest::newHttpRequest();
+    request->setPath("/ws");
+
+    // Connect
+    wsClient->connectToServer(request,
+                              [&](drogon::ReqResult result,
+                                  const drogon::HttpResponsePtr& response,
+                                  const drogon::WebSocketClientPtr& wsPtr) {
+                                  if (result == drogon::ReqResult::Ok) {
+                                      std::cout << "Connected to server" << std::endl;
+                                      Json::Value json;
+                                      // =============== Invalid type ===============
+                                      json["task"] = "transcode";
+                                      json["file"] = HELLOWORLD_FILE;
+                                      wsPtr->getConnection()->send(json.toStyledString());
+                                  } else {
+                                      promise.set_value(false);
+                                      std::cerr << "Failed to connect to server" << std::endl;
+                                  }
+                              });
+
+    while (future.wait_for(std::chrono::seconds(5)) != std::future_status::ready) {
+        std::this_thread::sleep_for(std::chrono::milliseconds(200));
+    }
+    ASSERT_TRUE(future.get());
+}
+
+void wsRequestTranscode() {
+    std::promise<bool> promise;
+    std::future<bool> future = promise.get_future();
+
+    // Websocket client
+    auto wsClient = drogon::WebSocketClient::newWebSocketClient(TRANSCODER_WEBSOCKET_URL);
+
+    // Recv message
+    wsClient->setMessageHandler([&](const std::string& message,
+                                    const drogon::WebSocketClientPtr& wsPtr,
+                                    const drogon::WebSocketMessageType& type) {
+        std::cout << "Received message: " << message << std::endl;
+        Json::Value json;
+        jsonParse(message, &json);
+        if (json["result"].asString() == "finish") {
+            promise.set_value(true);
+        } else if (json["type"].asString() == "error") {
+            promise.set_value(false);
+        }
+    });
+
+    // HTTP Request
+    auto request = drogon::HttpRequest::newHttpRequest();
+    request->setPath("/ws");
+
+    // Connect
+    wsClient->connectToServer(request,
+                              [&](drogon::ReqResult result,
+                                  const drogon::HttpResponsePtr& response,
+                                  const drogon::WebSocketClientPtr& wsPtr) {
+                                  if (result == drogon::ReqResult::Ok) {
+                                      std::cout << "Connected to server" << std::endl;
+                                      Json::Value json;
+                                      // =============== Invalid type ===============
+                                      json["task"] = "transcode";
+                                      json["file"] = SAMPLE_MP4;
                                       wsPtr->getConnection()->send(json.toStyledString());
                                   } else {
                                       promise.set_value(false);

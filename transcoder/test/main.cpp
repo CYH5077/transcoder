@@ -1,6 +1,7 @@
 #include "gtest/gtest.h"
-
 #include "server/Transcoder.hpp"
+
+#include "ffmpegpp.hpp"
 
 class TranscoderServer : public ::testing::Environment {
 public:
@@ -14,8 +15,9 @@ public:
     }
 };
 
-
 int main(int argc, char* argv[]) {
+    ff::ffmpegLogOff();
+
     ::testing::InitGoogleTest(&argc, argv);
 
     ::testing::AddGlobalTestEnvironment(new TranscoderServer);

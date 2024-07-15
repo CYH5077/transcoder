@@ -4,6 +4,10 @@ set(SOURCES
         DtoWSFileListRequest.cpp
         DtoWSFileListResponse.cpp
 
+        DtoWSTranscodeProgress.cpp
+        DtoWSTranscodeRequest.cpp
+        DtoWSTranscodeResponse.cpp
+
         DtoWSErrorResponse.cpp
 
 )

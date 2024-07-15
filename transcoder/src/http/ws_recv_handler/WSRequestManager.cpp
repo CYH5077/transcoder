@@ -4,6 +4,7 @@
 
 #include "dto/DtoWSErrorResponse.hpp"
 #include "http/ws_recv_handler/WSFileListTask.hpp"
+#include "http/ws_recv_handler/WSTranscodeTask.hpp"
 
 namespace tr {
     WSRequestManager::WSRequestManager() {
@@ -43,6 +44,7 @@ namespace tr {
 
     void WSRequestManager::initTask() {
         this->addTask(WSFileListTask::create());
+        this->addTask(WSTranscodeTask::create());
     }
 
     void WSRequestManager::addFilter(WSRequestFilterPtr filter) {

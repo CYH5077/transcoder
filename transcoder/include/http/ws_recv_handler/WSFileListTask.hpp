@@ -15,7 +15,6 @@ namespace tr {
 
     private:
         DtoWSFileListRequest request;
-        DtoWSFileListResponse response;
     };
 
     using WSFileListTaskPtr = std::shared_ptr<WSFileListTask>;
