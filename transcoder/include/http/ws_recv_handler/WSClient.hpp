@@ -7,7 +7,7 @@
 #include "dto/DtoResponseJsonType.hpp"
 #include "dto/DtoWSTranscodeRequest.hpp"
 #include "ffmpegpp.hpp"
-#include "thread/TranscodeThread.hpp"
+#include "transcoder/TRANSCODE_DEFINE.hpp"
 
 namespace tr {
     class WSClient;
@@ -22,22 +22,22 @@ namespace tr {
         virtual ~WSClient() = default;
 
     public:  // get set
+        // is connected
         void setConnect(bool connected);
         bool isConnected();
 
+        // transcode state
+        void setTranscodeState(TRANSCODE_STATE state);
+        TRANSCODE_STATE getTranscodeState();
+
     public:  // send to client
         void sendResponse(DtoResponseJsonTypePtr dto);
-
-    public:
-        void setTranscodeThread(TranscodeThreadPtr transcodeThread);
-        void transcodeStart(std::shared_ptr<ff::FFAVInputContext> inputContext, DtoWSTranscodeRequestPtr request);
-        void stopAll();
 
     private:
         bool connected;
 
         drogon::WebSocketConnectionPtr conn;
 
-        TranscodeThreadPtr transcodeThread;
+        TRANSCODE_STATE state;
     };
 };

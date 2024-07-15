@@ -1,10 +1,25 @@
 #include "dto/DtoWSTranscodeProgress.hpp"
 
 namespace tr {
+    DtoWSTranscodeProgress::DtoWSTranscodeProgress() : DtoResponseInterface("transcode_progress") {}
+
     DtoWSTranscodeProgressPtr DtoWSTranscodeProgress::createProgressMessage() {
         DtoWSTranscodeProgressPtr progress = std::make_shared<DtoWSTranscodeProgress>();
         progress->addJson("result", "progress");
         return progress;
+    }
+
+    DtoWSTranscodeProgressPtr DtoWSTranscodeProgress::createWaitMessage(int number) {
+        DtoWSTranscodeProgressPtr wait = std::make_shared<DtoWSTranscodeProgress>();
+        wait->addJson("result", "wait");
+        wait->addJson("number", std::to_string(number));
+        return wait;
+    }
+
+    DtoWSTranscodeProgressPtr DtoWSTranscodeProgress::createStartMessage() {
+        DtoWSTranscodeProgressPtr start = std::make_shared<DtoWSTranscodeProgress>();
+        start->addJson("result", "start");
+        return start;
     }
 
     DtoWSTranscodeProgressPtr DtoWSTranscodeProgress::createFinishMessage() {
@@ -18,6 +33,4 @@ namespace tr {
         stop->addJson("result", "stop");
         return stop;
     }
-
-    DtoWSTranscodeProgress::DtoWSTranscodeProgress() : DtoResponseInterface("transcode_progress") {}
 };

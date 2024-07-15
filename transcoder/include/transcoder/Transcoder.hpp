@@ -5,38 +5,29 @@
 
 #include "dto/DtoWSTranscodeRequest.hpp"
 #include "ffmpegpp.hpp"
+#include "http/ws_recv_handler/WSClient.hpp"
 
 namespace tr {
-    class WSClient;
-    using WSClientPtr = std::shared_ptr<WSClient>;
+    class Transcoder;
+    using TranscoderPtr = std::shared_ptr<Transcoder>;
 
-    class TranscodeThread;
-    using TranscodeThreadPtr = std::shared_ptr<TranscodeThread>;
-
-    class TranscodeThread {
+    class Transcoder {
     public:
-        static TranscodeThreadPtr create(WSClientPtr client);
+        static TranscoderPtr create(WSClientPtr client);
 
     public:
-        explicit TranscodeThread(WSClientPtr& client);
-        virtual ~TranscodeThread() = default;
+        explicit Transcoder(WSClientPtr client);
+        virtual ~Transcoder() = default;
 
     public:
-        bool isRunning();
-
         void start(std::shared_ptr<ff::FFAVInputContext> inputContext, DtoWSTranscodeRequestPtr request);
-        void stop();
 
     private:
         void transcode(std::shared_ptr<ff::FFAVInputContext> inputContext,
                        ff::FFAVVideoEncodeParametersPtr videoEncodeParameter,
                        ff::FFAVAudioEncodeParametersPtr audioEncodeParameter);
 
-
     private:
-        bool running = false;
-        std::shared_ptr<std::thread> thread;
-
         WSClientPtr client;
     };
 };

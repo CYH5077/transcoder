@@ -12,6 +12,8 @@ namespace tr {
 
     public:
         static DtoWSTranscodeProgressPtr createProgressMessage();
+        static DtoWSTranscodeProgressPtr createStartMessage();
+        static DtoWSTranscodeProgressPtr createWaitMessage(int number);
         static DtoWSTranscodeProgressPtr createFinishMessage();
         static DtoWSTranscodeProgressPtr createStopMessage();
 

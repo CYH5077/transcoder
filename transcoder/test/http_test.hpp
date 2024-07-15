@@ -299,8 +299,13 @@ void wsRequestTranscode() {
         std::cout << "Received message: " << message << std::endl;
         Json::Value json;
         jsonParse(message, &json);
+        
+        static int finishCount = 0;
         if (json["result"].asString() == "finish") {
-            promise.set_value(true);
+            finishCount++;
+            if (finishCount >= 3) {
+                promise.set_value(true);
+            }
         } else if (json["type"].asString() == "error") {
             promise.set_value(false);
         }
@@ -321,6 +326,8 @@ void wsRequestTranscode() {
                                       // =============== Invalid type ===============
                                       json["task"] = "transcode";
                                       json["file"] = SAMPLE_MP4;
+                                      wsPtr->getConnection()->send(json.toStyledString());
+                                      wsPtr->getConnection()->send(json.toStyledString());
                                       wsPtr->getConnection()->send(json.toStyledString());
                                   } else {
                                       promise.set_value(false);

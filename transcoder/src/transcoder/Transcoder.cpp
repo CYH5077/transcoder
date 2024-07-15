@@ -1,44 +1,25 @@
-#include "thread/TranscodeThread.hpp"
+#include "transcoder/Transcoder.hpp"
 
 #include "dto/DtoWSErrorResponse.hpp"
 #include "dto/DtoWSTranscodeProgress.hpp"
 #include "http/ws_recv_handler/WSClient.hpp"
 
 namespace tr {
-    TranscodeThreadPtr TranscodeThread::create(WSClientPtr client) {
-        return std::make_shared<TranscodeThread>(client);
+    TranscoderPtr Transcoder::create(WSClientPtr client) {
+        return std::make_shared<Transcoder>(client);
     }
 
-    TranscodeThread::TranscodeThread(WSClientPtr& client) : client(client) {}
+    Transcoder::Transcoder(WSClientPtr client) : client(client) {}
 
-    bool TranscodeThread::isRunning() {
-        return this->running;
-    }
-
-    void TranscodeThread::start(std::shared_ptr<ff::FFAVInputContext> inputContext, DtoWSTranscodeRequestPtr request) {
-        if (this->running == true) {
-            return;
-        }
-
-        this->running = true;
-
+    void Transcoder::start(std::shared_ptr<ff::FFAVInputContext> inputContext, DtoWSTranscodeRequestPtr request) {
         ff::FFAVVideoEncodeParametersPtr videoEncodeParameter = ff::FFAVVideoEncodeParameters::create(*inputContext);
         ff::FFAVAudioEncodeParametersPtr audioEncodeParameter = ff::FFAVAudioEncodeParameters::create(*inputContext);
 
-        this->thread = std::make_shared<std::thread>(
-            &TranscodeThread::transcode, this, inputContext, videoEncodeParameter, audioEncodeParameter);
-    }
-
-    void TranscodeThread::stop() {
-        this->running = false;
-        if (this->thread != nullptr && this->thread->joinable()) {
-            this->thread->join();
-        }
+        this->transcode(inputContext, videoEncodeParameter, audioEncodeParameter);
     }
 
 #define FFAV_ERROR_CHECK_RETURN(error)                                                          \
     if (error.getType() != ff::AV_ERROR_TYPE::SUCCESS) {                                        \
-        this->running = false;                                                                  \
         this->client->sendResponse(DtoWSErrorResponse::createErrorMessage(error.getMessage())); \
         return;                                                                                 \
     }
@@ -49,13 +30,17 @@ namespace tr {
         break;                                                                                  \
     }
 
-    void TranscodeThread::transcode(std::shared_ptr<ff::FFAVInputContext> inputContext,
-                                    ff::FFAVVideoEncodeParametersPtr videoEncodeParameter,
-                                    ff::FFAVAudioEncodeParametersPtr audioEncodeParameter) {
+    void Transcoder::transcode(std::shared_ptr<ff::FFAVInputContext> inputContext,
+                               ff::FFAVVideoEncodeParametersPtr videoEncodeParameter,
+                               ff::FFAVAudioEncodeParametersPtr audioEncodeParameter) {
         ///////////////////////////////////////////////////////
+        ///////////////////////////////////////////////////////
+        //
         //
         //  트랜스 코딩 임시 테스트 코드 ffmpegpp쪽을 수정해야겠다.
         //
+        //
+        ///////////////////////////////////////////////////////
         ///////////////////////////////////////////////////////
 
         ff::AVError error;
@@ -86,7 +71,7 @@ namespace tr {
         auto nowEpochTime = std::chrono::system_clock::now();
 
         error = decoder.decode(*inputContext, [&](ff::DATA_TYPE type, ff::FFAVFrame& frame) {
-            if (!this->running) {
+            if (this->client->isConnected() == false) {
                 return false;
             }
 
@@ -126,9 +111,5 @@ namespace tr {
         } else {
             encoder.flush();
         }
-
-        this->client->sendResponse(DtoWSTranscodeProgress::createFinishMessage());
-
-        this->running = false;
     }
 }  // namespace tr

@@ -1,10 +1,12 @@
 #include "http/ws_recv_handler/WSTranscodeTask.hpp"
 
 #include "dto/DtoWSErrorResponse.hpp"
+#include "dto/DtoWSTranscodeProgress.hpp"
 #include "ffmpegpp.hpp"
+#include "transcoder/Transcoder.hpp"
 
 namespace tr {
-    WSTranscodeTask::WSTranscodeTask() : WSRequestTaskInterface("transcode") {}
+    WSTranscodeTask::WSTranscodeTask() : WSRequestTaskInterface("transcode"), transcodeTaskThread(1) {}
 
     void WSTranscodeTask::task(WSClientPtr client, std::shared_ptr<Json::Value> json) {
         auto request = DtoWSTranscodeRequest::create();
@@ -27,8 +29,16 @@ namespace tr {
             return;
         }
 
-        client->transcodeStart(inputContext, request);
+        // Transcode Pool enqueue
+        this->transcodeTaskThread.enqueue(client, [this, client, inputContext, request]() {
+            client->setTranscodeState(TRANSCODE_STATE::START);
+            client->sendResponse(DtoWSTranscodeProgress::createStartMessage());
 
-        client->sendResponse(DtoWSTranscodeResponse::create());
+            Transcoder transcoder(client);
+            transcoder.start(inputContext, request);
+
+            client->setTranscodeState(TRANSCODE_STATE::NONE);
+            client->sendResponse(DtoWSTranscodeProgress::createFinishMessage());
+        });
     }
 }

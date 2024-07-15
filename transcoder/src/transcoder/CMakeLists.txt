@@ -1,5 +1,5 @@
 set(SOURCES
-    TranscodeThread.cpp
+    Transcoder.cpp
 )
 
 
