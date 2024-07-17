@@ -13,6 +13,6 @@ namespace tr {
         virtual ~WSRequestFilter() = default;
 
     public:
-        virtual bool filter(const WSClientPtr client, std::shared_ptr<Json::Value> json) = 0;
+        virtual bool filter(WSClientPtr client, std::shared_ptr<Json::Value> json) = 0;
     };
 };

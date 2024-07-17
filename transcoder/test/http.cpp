@@ -31,8 +31,7 @@ TEST(HTTP_TEST, FILE_UPLOAD_DOWNLOAD) {
     });
 #endif
 
-    requestUploadFile(client);
-    requestDownloadFile(client);
+    requestUploadDownload(client);
 }
 
 TEST(HTTP_TEST, WS_FILE_LIST) {

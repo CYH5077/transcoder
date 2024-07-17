@@ -1,6 +1,8 @@
 set(SOURCES
         DtoResponseJsonType.cpp
 
+        DtoWSConnectMessage.cpp
+
         DtoWSFileListRequest.cpp
         DtoWSFileListResponse.cpp
 

@@ -3,9 +3,11 @@
 namespace tr {
     DtoWSTranscodeProgress::DtoWSTranscodeProgress() : DtoResponseInterface("transcode_progress") {}
 
-    DtoWSTranscodeProgressPtr DtoWSTranscodeProgress::createProgressMessage() {
+    DtoWSTranscodeProgressPtr DtoWSTranscodeProgress::createProgressMessage(int now, int max) {
         DtoWSTranscodeProgressPtr progress = std::make_shared<DtoWSTranscodeProgress>();
         progress->addJson("result", "progress");
+        progress->addJson("now", std::to_string(now));
+        progress->addJson("max", std::to_string(max));
         return progress;
     }
 

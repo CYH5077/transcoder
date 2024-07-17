@@ -6,21 +6,26 @@
 
 #include "drogon/drogon.h"
 #include "http/ws_recv_handler/WSClient.hpp"
+#include "utils/ThreadSafeQueue.hpp"
 
 namespace tr {
     class HTTPSessionManager {
     public:
-        explicit HTTPSessionManager() = default;
-        virtual ~HTTPSessionManager() = default;
+        static HTTPSessionManager& getInstance();
+        static HTTPSessionManager instance;
 
     public:
-        void addClient(const drogon::WebSocketConnectionPtr& conn, WSClientPtr client);
+        std::string addClient(const drogon::WebSocketConnectionPtr& conn);
         void removeClient(const drogon::WebSocketConnectionPtr& conn);
         
         WSClientPtr getClient(const drogon::WebSocketConnectionPtr& conn);
-        WSClientPtr getClient(const std::string& sessionId);
+        WSClientPtr getClient(std::string& sessionId);
 
         bool hasClient(const drogon::WebSocketConnectionPtr& conn);
+
+    private:
+        explicit HTTPSessionManager() = default;
+        virtual ~HTTPSessionManager() = default;
 
     private:
         std::mutex clientsMutex;

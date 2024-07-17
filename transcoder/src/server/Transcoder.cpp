@@ -5,6 +5,7 @@
 #include "drogon/drogon.h"
 #include "http/HTTPFileHandler.hpp"
 #include "http/HTTPWebSocketHandler.hpp"
+#include "http/HTTPSessionFilter.hpp"
 
 namespace tr {
     Transcoder Transcoder::instance;

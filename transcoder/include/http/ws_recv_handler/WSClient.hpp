@@ -30,6 +30,9 @@ namespace tr {
         void setTranscodeState(TRANSCODE_STATE state);
         TRANSCODE_STATE getTranscodeState();
 
+        // session
+        std::string getSessionId();
+
     public:  // send to client
         void sendResponse(DtoResponseJsonTypePtr dto);
 
@@ -39,5 +42,7 @@ namespace tr {
         drogon::WebSocketConnectionPtr conn;
 
         TRANSCODE_STATE state;
+
+        std::string sessionId;
     };
 };

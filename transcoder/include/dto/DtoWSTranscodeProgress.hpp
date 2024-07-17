@@ -11,7 +11,7 @@ namespace tr {
         enum class STATE { TRRANSCODING, STOP, FINISH };
 
     public:
-        static DtoWSTranscodeProgressPtr createProgressMessage();
+        static DtoWSTranscodeProgressPtr createProgressMessage(int now, int max);
         static DtoWSTranscodeProgressPtr createStartMessage();
         static DtoWSTranscodeProgressPtr createWaitMessage(int number);
         static DtoWSTranscodeProgressPtr createFinishMessage(const std::string& outputFile);

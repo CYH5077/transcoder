@@ -3,27 +3,19 @@
 #include <mutex>
 
 #include "dto/DtoWSErrorResponse.hpp"
+#include "dto/DtoWSConnectMessage.hpp"
+#include "http/HTTPSessionManager.hpp"
 
 namespace tr {
     void HTTPWebSocketHandler::handleNewMessage(const drogon::WebSocketConnectionPtr& conn,
                                                 std::string&& message,
                                                 const drogon::WebSocketMessageType& type) {
         if (type == drogon::WebSocketMessageType::Text) {
-            WSClientPtr client;
-
             // get WSClient
-            {
-                std::lock_guard<std::mutex> lock(this->clientsMutex);
-                if (clients.find(conn) != clients.end()) {
-                    client = clients[conn];
-                }
-            }
-
-            // 왜 map 에 없을까
-            if (client == nullptr) {
-                LOG_INFO << "Client not found";
+            WSClientPtr client = HTTPSessionManager::getInstance().getClient(conn);
+            if (client == nullptr) {  // 왜 map 에 없을까
                 conn->forceClose();
-                return;
+				return;
             }
 
             // json parse
@@ -37,30 +29,21 @@ namespace tr {
             } else {
                 client->sendResponse(DtoWSErrorResponse::createErrorMessage("Invalid JSON format: " + errors));
             }
+        } else {
+            conn->forceClose();
         }
     }
 
     void HTTPWebSocketHandler::handleConnectionClosed(const drogon::WebSocketConnectionPtr& conn) {
         LOG_INFO << "Close  connection client IP: " << conn->peerAddr().toIpPort();
-
-        {
-            std::lock_guard<std::mutex> lock(this->clientsMutex);
-            WSClientPtr client = clients[conn];
-            client->setConnect(false);
-            clients.erase(conn);
-        }
+        HTTPSessionManager::getInstance().removeClient(conn);
     }
 
     void HTTPWebSocketHandler::handleNewConnection(const drogon::HttpRequestPtr& requset,
                                                    const drogon::WebSocketConnectionPtr& conn) {
         // 접속한 클라이언트의 IP 를 출력한다.
         LOG_INFO << "New connection client IP: " << conn->peerAddr().toIpPort();
-
-        {
-            std::lock_guard<std::mutex> lock(this->clientsMutex);
-            WSClientPtr client = WSClient::create(conn);
-            client->setConnect(true);
-            clients[conn] = client;
-        }
+        std::string sessionId = HTTPSessionManager::getInstance().addClient(conn);
+        conn->sendJson(DtoConnectMessage::create(sessionId)->toJson()); 
     }
 }

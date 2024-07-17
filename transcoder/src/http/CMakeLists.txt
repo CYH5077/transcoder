@@ -1,6 +1,7 @@
 set(SOURCES
         HTTPFileHandler.cpp
         HTTPWebSocketHandler.cpp
+        HTTPSessionFilter.cpp
         HTTPSessionManager.cpp
 
         ws_recv_handler/WSRequestFilter.cpp
@@ -11,6 +12,8 @@ set(SOURCES
 
         ws_recv_handler/WSFileListTask.cpp
         ws_recv_handler/WSTranscodeTask.cpp
+
+        ws_recv_handler/WSSessionFilter.cpp
 )
 
 

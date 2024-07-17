@@ -33,24 +33,30 @@ namespace tr {
         this->transcode(inputContext, parameter, request->getOutputFile());
     }
 
-#define FFAV_ERROR_CHECK_RETURN(error)                                                          \
-    if (error.getType() != ff::AV_ERROR_TYPE::SUCCESS) {                                        \
-        this->client->sendResponse(DtoWSErrorResponse::createErrorMessage(error.getMessage())); \
-        return;                                                                                 \
-    }
-
-#define FFAV_ERROR_CHECK_BREAK(error)                                                           \
-    if (error.getType() != ff::AV_ERROR_TYPE::SUCCESS) {                                        \
-        this->client->sendResponse(DtoWSErrorResponse::createErrorMessage(error.getMessage())); \
-        break;                                                                                  \
-    }
-
     void Transcoder::transcode(std::shared_ptr<ff::FFAVInputContext> inputContext,
                                ff::FFAVTranscoderParameter& parameter,
                                const std::string& outputFile) {
         ff::AVError error;
 
         ff::FFAVTranscoder transcoder(parameter);
+
+        int decodeCount = 0;
+        int max = parameter.getInputContext().getFrameCount();
+
+        auto startTime = std::chrono::system_clock::now();
+        transcoder.setDecodeCallback([&](ff::FFAVFrame&) {
+            decodeCount++;
+
+            auto nowTime = std::chrono::system_clock::now();
+            if (std::chrono::duration_cast<std::chrono::milliseconds>(nowTime - startTime).count() >= 350) {
+                startTime = nowTime;
+                this->client->sendResponse(DtoWSTranscodeProgress::createProgressMessage(decodeCount, max));
+            }
+        });
+
+        transcoder.setFinishCallback(
+            [&]() { this->client->sendResponse(DtoWSTranscodeProgress::createProgressMessage(decodeCount, max)); });
+
         transcoder.setErrorCallback([&](ff::ERROR_TYPE type, ff::AVError& error) {
             std::cout << error.getMessage() << " " << error.getAVErrorMessage() << std::endl;
             client->sendResponse(DtoWSErrorResponse::createErrorMessage(error.getMessage()));

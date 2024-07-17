@@ -3,29 +3,43 @@
 #include "drogon/drogon.h"
 
 namespace tr {
-    void HTTPSessionManager::addClient(const drogon::WebSocketConnectionPtr& conn) {
+    HTTPSessionManager HTTPSessionManager::instance;
+
+    HTTPSessionManager& HTTPSessionManager::getInstance() {
+		return HTTPSessionManager::instance;
+	}
+
+    std::string HTTPSessionManager::addClient(const drogon::WebSocketConnectionPtr& conn) {
         std::lock_guard<std::mutex> lock(this->clientsMutex);
-        this->clients[conn] = WSClient::create(conn);
+        WSClientPtr client = WSClient::create(conn);
+        client->setConnect(true);
+        this->clients[conn] = client;
+        return client->getSessionId();
     }
 
     void HTTPSessionManager::removeClient(const drogon::WebSocketConnectionPtr& conn) {
+        WSClientPtr client = this->getClient(conn);
+        if (client != nullptr) {
+			client->setConnect(false);
+		}
+
         std::lock_guard<std::mutex> lock(this->clientsMutex);
         this->clients.erase(conn);
     }
 
     WSClientPtr HTTPSessionManager::getClient(const drogon::WebSocketConnectionPtr& conn) {
         if (this->hasClient(conn) == false) {
-			return nullptr;
-		}
+            return nullptr;
+        }
 
         std::lock_guard<std::mutex> lock(this->clientsMutex);
         return this->clients[conn];
     }
 
-    WSClientPtr HTTPSessionManager::getClient(const std::string& sessionId) {
+    WSClientPtr HTTPSessionManager::getClient(std::string& sessionId) {
         std::lock_guard<std::mutex> lock(this->clientsMutex);
-        for (const auto& client : this->clients) {
-            if (client.second == sessionId) {
+        for (auto client : this->clients) {
+            if (client.second->getSessionId() == sessionId) {
                 return client.second;
             }
         }

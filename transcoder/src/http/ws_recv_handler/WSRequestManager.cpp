@@ -5,6 +5,7 @@
 #include "dto/DtoWSErrorResponse.hpp"
 #include "http/ws_recv_handler/WSFileListTask.hpp"
 #include "http/ws_recv_handler/WSTranscodeTask.hpp"
+#include "http/ws_recv_handler/WSSessionFilter.hpp"
 
 namespace tr {
     WSRequestManager::WSRequestManager() {
@@ -20,6 +21,7 @@ namespace tr {
         // filter
         for (auto filter : this->filters) {
             if (filter->filter(client, json) == false) {
+                client->sendResponse(DtoWSErrorResponse::createErrorMessage("Invalid session id"));
                 return;
             }
         }
@@ -40,7 +42,9 @@ namespace tr {
         }
     }
 
-    void WSRequestManager::initFilter() {}
+    void WSRequestManager::initFilter() {
+        this->addFilter(WSSessionFilter::create());    
+    }
 
     void WSRequestManager::initTask() {
         this->addTask(WSFileListTask::create());
