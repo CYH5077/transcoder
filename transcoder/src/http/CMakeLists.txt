@@ -1,6 +1,7 @@
 set(SOURCES
         HTTPFileHandler.cpp
         HTTPWebSocketHandler.cpp
+        HTTPSessionManager.cpp
 
         ws_recv_handler/WSRequestFilter.cpp
         ws_recv_handler/WSRequestTask.cpp 
@@ -11,6 +12,7 @@ set(SOURCES
         ws_recv_handler/WSFileListTask.cpp
         ws_recv_handler/WSTranscodeTask.cpp
 )
+
 
 
 set(UPDATED_SOURCES "")

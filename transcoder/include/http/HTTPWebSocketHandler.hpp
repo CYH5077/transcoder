@@ -24,8 +24,6 @@ namespace tr {
                                  const drogon::WebSocketConnectionPtr& conn) override;
 
     private:
-        std::mutex clientsMutex;
-        std::map<const drogon::WebSocketConnectionPtr, WSClientPtr> clients;
 
         WSRequestManager taskManager;
     };
