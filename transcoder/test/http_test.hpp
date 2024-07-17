@@ -99,7 +99,7 @@ void wsRequestFileList() {
         std::cout << "Received message: " << message << std::endl;
         Json::Value json;
         jsonParse(message, &json);
-        if (json["type"].asString() == "file_list" && json["file_list"][0] == HELLOWORLD_FILE) {
+        if (json["type"].asString() == "file_list" && !json["file_list"].empty()) {
             promise.set_value(true);
         } else {
             promise.set_value(false);

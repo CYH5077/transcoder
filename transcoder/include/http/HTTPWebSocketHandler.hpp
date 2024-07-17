@@ -1,7 +1,6 @@
 #pragma once
 
 #include <map>
-#include <concurrent_unordered_map.h>
 #include <mutex>
 
 #include "drogon/WebSocketController.h"

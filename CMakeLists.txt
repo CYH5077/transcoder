@@ -9,7 +9,15 @@ endif()
 
 
 function(update_submodule SUBMODULE_PATH)
-  message(STATUS "${SUBMODULE_PATH} submodule update.....")
+  message(STATUS "Initializing and updating git submodules...")
+  execute_process(
+    COMMAND ${GIT_EXECUTABLE} submodule init
+    WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
+    RESULT_VARIABLE GIT_INIT_RESULT
+  )
+  if(NOT GIT_INIT_RESULT EQUAL "0")
+    message(FATAL_ERROR "Git submodule init failed")
+  endif()
   execute_process(
     COMMAND ${GIT_EXECUTABLE} submodule update --init --recursive --remote ${SUBMODULE_PATH}
     WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}

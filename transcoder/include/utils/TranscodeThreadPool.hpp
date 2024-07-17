@@ -3,6 +3,7 @@
 #include <functional>
 #include <future>
 #include <iostream>
+#include <list>
 #include <memory>
 #include <queue>
 #include <thread>
@@ -35,8 +36,8 @@ namespace tr {
 
             std::future<R> result = task->get_future();
             {
+                std::lock_guard<std::mutex> lockGuard(this->mutex);
                 this->taskQueue.push_back(ThreadQueuePair([task]() { (*task)(); }, client));
-                std::unique_lock<std::mutex> lockGuard(this->mutex);
                 client->sendResponse(DtoWSTranscodeProgress::createWaitMessage(this->taskQueue.size()));
             }
 
@@ -49,10 +50,7 @@ namespace tr {
         }
 
         void stop() {
-            {
-                std::unique_lock<std::mutex> lockGuard(this->mutex);
-                this->isRunning = false;
-            }
+            this->isRunning = false;
             this->condition.notify_all();
 
             for (auto& thread : this->threadList) {
@@ -76,7 +74,10 @@ namespace tr {
                         {
                             std::unique_lock<std::mutex> lockGaurd(this->mutex);
                             this->condition.wait(
-                                lockGaurd, [this]() { return this->isRunning == false || !this->taskQueue.empty(); });
+                                lockGaurd, [this]() { 
+                                    std::cout << "isRunning: " << isRunning << " taskQueue.empty(): " << taskQueue.empty() << std::endl; 
+                                    return this->isRunning == false || !this->taskQueue.empty(); 
+                                });
                             if (this->isRunning == false && this->taskQueue.empty() == true) {
                                 return;
                             }
@@ -85,9 +86,11 @@ namespace tr {
                             this->taskQueue.pop_front();
 
                             int count = 1;
+                            std::cout << "send" << std::endl;
                             for (auto& task : this->taskQueue) {
                                 task.second->sendResponse(DtoWSTranscodeProgress::createWaitMessage(count++));
                             }
+                            std::cout << "send finish" << std::endl;
                         }
                         task.first();
                     }
