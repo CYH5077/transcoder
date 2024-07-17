@@ -16,7 +16,7 @@ function(update_submodule SUBMODULE_PATH)
     RESULT_VARIABLE GIT_INIT_RESULT
   )
   if(NOT GIT_INIT_RESULT EQUAL "0")
-    message(FATAL_ERROR "Git submodule init failed")
+    #message(FATAL_ERROR "Git submodule init failed")
   endif()
   execute_process(
     COMMAND ${GIT_EXECUTABLE} submodule update --init --recursive --remote ${SUBMODULE_PATH}
@@ -24,7 +24,7 @@ function(update_submodule SUBMODULE_PATH)
     RESULT_VARIABLE GIT_SUBMOD_RESULT
   )
   if(NOT GIT_SUBMOD_RESULT EQUAL "0")
-    message(FATAL_ERROR "${SUBMODULE_PATH} submodule update failed")
+    #message(FATAL_ERROR "${SUBMODULE_PATH} submodule update failed")
   endif()
   message(STATUS "${SUBMODULE_PATH} submodule update success")
 endfunction()

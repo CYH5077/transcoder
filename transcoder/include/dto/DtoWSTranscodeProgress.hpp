@@ -14,7 +14,7 @@ namespace tr {
         static DtoWSTranscodeProgressPtr createProgressMessage();
         static DtoWSTranscodeProgressPtr createStartMessage();
         static DtoWSTranscodeProgressPtr createWaitMessage(int number);
-        static DtoWSTranscodeProgressPtr createFinishMessage();
+        static DtoWSTranscodeProgressPtr createFinishMessage(const std::string& outputFile);
         static DtoWSTranscodeProgressPtr createStopMessage();
 
     public:

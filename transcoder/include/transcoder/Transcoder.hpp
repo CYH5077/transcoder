@@ -23,9 +23,7 @@ namespace tr {
         void start(std::shared_ptr<ff::FFAVInputContext> inputContext, DtoWSTranscodeRequestPtr request);
 
     private:
-        void transcode(std::shared_ptr<ff::FFAVInputContext> inputContext,
-                       ff::FFAVVideoEncodeParametersPtr videoEncodeParameter,
-                       ff::FFAVAudioEncodeParametersPtr audioEncodeParameter);
+        void transcode(std::shared_ptr<ff::FFAVInputContext> inputContext, ff::FFAVTranscoderParameter& parameter, const std::string& outputFile);
 
     private:
         WSClientPtr client;

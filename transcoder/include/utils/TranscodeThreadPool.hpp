@@ -20,7 +20,7 @@ namespace tr {
     class TranscodeThreadPool {
     public:
         explicit TranscodeThreadPool(unsigned int threadCount = std::thread::hardware_concurrency())
-            : isRunning(false) {
+            : isRunning(true) {
             this->createThread(threadCount);
         }
 
@@ -36,11 +36,11 @@ namespace tr {
 
             std::future<R> result = task->get_future();
             {
-                std::lock_guard<std::mutex> lockGuard(this->mutex);
+                std::lock_guard<std::mutex> lockGuard(this->queueMutex);
                 this->taskQueue.push_back(ThreadQueuePair([task]() { (*task)(); }, client));
-                client->sendResponse(DtoWSTranscodeProgress::createWaitMessage(this->taskQueue.size()));
             }
 
+            client->sendResponse(DtoWSTranscodeProgress::createWaitMessage(this->taskQueue.size()));
             this->condition.notify_one();
             return result;
         }
@@ -67,36 +67,32 @@ namespace tr {
 
     private:
         void createThread(unsigned int threadCount) {
+            this->isRunning = true;
             for (unsigned int i = 0; i < threadCount; i++) {
                 this->threadList.emplace_back([this]() {
                     while (true) {
                         ThreadQueuePair task;
                         {
-                            std::unique_lock<std::mutex> lockGaurd(this->mutex);
+                            std::unique_lock<std::mutex> lockGaurd(this->conditionMutex);
                             this->condition.wait(
-                                lockGaurd, [this]() { 
-                                    std::cout << "isRunning: " << isRunning << " taskQueue.empty(): " << taskQueue.empty() << std::endl; 
-                                    return this->isRunning == false || !this->taskQueue.empty(); 
-                                });
+                                lockGaurd, [this]() { return this->isRunning == false || !this->taskQueue.empty(); });
                             if (this->isRunning == false && this->taskQueue.empty() == true) {
                                 return;
                             }
-
+                        
+                        }
+                        {
+                            std::lock_guard<std::mutex> lockGaurd(this->queueMutex);
                             task = std::move(this->taskQueue.front());
                             this->taskQueue.pop_front();
-
                             int count = 1;
-                            std::cout << "send" << std::endl;
                             for (auto& task : this->taskQueue) {
                                 task.second->sendResponse(DtoWSTranscodeProgress::createWaitMessage(count++));
                             }
-                            std::cout << "send finish" << std::endl;
                         }
                         task.first();
                     }
                 });
-
-                this->isRunning = true;
             }
         }
 
@@ -105,9 +101,10 @@ namespace tr {
 
         std::vector<std::thread> threadList;
 
-        std::mutex mutex;
+        std::mutex conditionMutex;
         std::condition_variable condition;
 
+        std::mutex queueMutex;
         std::list<ThreadQueuePair> taskQueue;
     };
 }

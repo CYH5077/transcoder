@@ -18,8 +18,10 @@ namespace tr {
 
     public:
         std::string getTargetFile();
+        std::string getOutputFile();
 
     private:
         std::string targetFile;
+        std::string outputFile;
     };
 }

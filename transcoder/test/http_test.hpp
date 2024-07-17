@@ -326,8 +326,12 @@ void wsRequestTranscode() {
                                       // =============== Invalid type ===============
                                       json["task"] = "transcode";
                                       json["file"] = SAMPLE_MP4;
+
+                                      json["output"] = "output.mp4";
                                       wsPtr->getConnection()->send(json.toStyledString());
+                                      json["output"] = "output.ts";
                                       wsPtr->getConnection()->send(json.toStyledString());
+                                      json["output"] = "output.avi";
                                       wsPtr->getConnection()->send(json.toStyledString());
                                   } else {
                                       promise.set_value(false);

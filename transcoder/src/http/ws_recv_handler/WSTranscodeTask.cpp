@@ -38,7 +38,7 @@ namespace tr {
             transcoder.start(inputContext, request);
 
             client->setTranscodeState(TRANSCODE_STATE::NONE);
-            client->sendResponse(DtoWSTranscodeProgress::createFinishMessage());
+            client->sendResponse(DtoWSTranscodeProgress::createFinishMessage(request->getOutputFile()));
         });
     }
 }
