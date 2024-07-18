@@ -4,11 +4,11 @@
 
 namespace tr {
     template <typename T>
-    class ThreadSafeQueue {
+    class FFAVThreadSafeQueue {
     public:
-        ThreadSafeQueue(size_t maxSize) : maxSize(maxSize), close(false) {}
+        FFAVThreadSafeQueue(size_t maxSize) : maxSize(maxSize), close(false) {}
 
-        void push(T item) {
+        void push(T& item) {
             std::unique_lock<std::mutex> lock(this->pushConditionMutex);
             pushCondition.wait(lock, [this] {
                 if (this->isClosed() == true || queue.size() < maxSize) {
@@ -22,7 +22,7 @@ namespace tr {
             }
 
             {
-                std::lock_guard<std::mutex>(this->queueMutex);
+                std::lock_guard<std::mutex> lockGuard(this->queueMutex);
                 queue.emplace(item);
             }
 
@@ -40,8 +40,7 @@ namespace tr {
         }
 
         T pop() {
-       
-            std::lock_guard<std::mutex>(this->queueMutex);
+            std::lock_guard<std::mutex> lockGuard(this->queueMutex);
             T item = queue.front();
             queue.pop();
 
@@ -51,8 +50,8 @@ namespace tr {
         }
 
         void open() {
-			this->close = false;
-		}
+            this->close = false;
+        }
 
         void closeNotify() {
             this->close = true;
