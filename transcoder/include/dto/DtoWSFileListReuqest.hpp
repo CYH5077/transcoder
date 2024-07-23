@@ -12,5 +12,11 @@ namespace tr {
 
     public:
         virtual bool parseJson(const std::shared_ptr<Json::Value> json) override;
+
+    public:
+        bool isTranscodedFileList();
+
+    private:
+        bool _isTranscodedFileList;
     };
 };

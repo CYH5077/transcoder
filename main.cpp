@@ -3,7 +3,7 @@
 #include "ffmpegpp.hpp"
 
 int main(int argc, char* argv[]) {
-    if (tr::Config::parse(argc, argv) == false) {
+    if (tr::Config::getInstance().parse(argc, argv) == false) {
         return -1;
     }
 

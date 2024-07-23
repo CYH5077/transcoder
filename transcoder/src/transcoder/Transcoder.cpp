@@ -1,9 +1,12 @@
 #include "transcoder/Transcoder.hpp"
 
+#include <filesystem>
+
 #include "dto/DtoWSErrorResponse.hpp"
 #include "dto/DtoWSTranscodeProgress.hpp"
 #include "ffmpegpp.hpp"
 #include "http/ws_recv_handler/WSClient.hpp"
+#include "server/Config.hpp"
 
 namespace tr {
     TranscoderPtr Transcoder::create(WSClientPtr client) {
@@ -62,6 +65,9 @@ namespace tr {
             client->sendResponse(DtoWSErrorResponse::createErrorMessage(error.getMessage()));
         });
 
-        transcoder.transcode(outputFile);
+        std::string transcodeDir = Config::getInstance().getTranscodeDir();
+        std::filesystem::create_directory(transcodeDir);
+
+        transcoder.transcode(transcodeDir + "/" + outputFile);
     }
 }  // namespace tr

@@ -7,7 +7,9 @@
 
 void requestUploadDownload(drogon::HttpClientPtr client);
 void requestUploadFile(drogon::HttpClientPtr client, const std::string& sessionId);
-void requestDownloadFile(drogon::HttpClientPtr client, const std::string& sessionId);
+void requestDownloadFile(drogon::HttpClientPtr client,
+                         const std::string& sessionId,
+                         const std::string& file = HELLOWORLD_FILE);
 
 void jsonParse(const std::string& jsonStr, Json::Value* json);
 void wsRequestFileList();
@@ -15,6 +17,7 @@ void wsRequestIntTypeError();
 void wsRequestInvalidType();
 void wsRequestTranscodeError();
 void wsRequestTranscode();
+void wsRequestTranscodedFileListAndDownload();
 
 void requestUploadDownload(drogon::HttpClientPtr client) {
     std::promise<bool> promise;
@@ -91,13 +94,13 @@ void requestUploadFile(drogon::HttpClientPtr client, const std::string& sessionI
 }
 
 // File download test
-void requestDownloadFile(drogon::HttpClientPtr client, const std::string& sessionId) {
+void requestDownloadFile(drogon::HttpClientPtr client, const std::string& sessionId, const std::string& file) {
     std::promise<bool> promise;
     std::future<bool> future = promise.get_future();
 
     // helloworld.txt Download
     Json::Value json;
-    json["file"] = HELLOWORLD_FILE;
+    json["file"] = file;
 
     auto req = drogon::HttpRequest::newHttpJsonRequest(json);
     req->setPath("/file");
@@ -367,9 +370,9 @@ void wsRequestTranscode() {
         } else if (json["type"].asString() == "error") {
             promise.set_value(false);
         } else if (json["type"].asString() == "connect") {
-			Json::Value requestJson;
-			requestJson["task"] = "transcode";
-			requestJson["file"] = SAMPLE_MP4;
+            Json::Value requestJson;
+            requestJson["task"] = "transcode";
+            requestJson["file"] = SAMPLE_MP4;
             requestJson["session_id"] = json["session_id"];
 
             requestJson["output"] = "output.mp4";
@@ -378,7 +381,100 @@ void wsRequestTranscode() {
             wsPtr->getConnection()->sendJson(requestJson);
             requestJson["output"] = "output.avi";
             wsPtr->getConnection()->sendJson(requestJson);
-		}
+        }
+    });
+
+    // HTTP Request
+    auto request = drogon::HttpRequest::newHttpRequest();
+    request->setPath("/ws");
+
+    // Connect
+    wsClient->connectToServer(request,
+                              [&](drogon::ReqResult result,
+                                  const drogon::HttpResponsePtr& response,
+                                  const drogon::WebSocketClientPtr& wsPtr) {
+                                  if (result == drogon::ReqResult::Ok) {
+                                      std::cout << "Connected to server" << std::endl;
+                                  } else {
+                                      promise.set_value(false);
+                                      std::cerr << "Failed to connect to server" << std::endl;
+                                  }
+                              });
+
+    while (future.wait_for(std::chrono::seconds(5)) != std::future_status::ready) {
+        std::this_thread::sleep_for(std::chrono::milliseconds(200));
+    }
+    ASSERT_TRUE(future.get());
+}
+
+void wsRequestTranscodedFileListAndDownload() {
+    std::promise<bool> promise;
+    std::future<bool> future = promise.get_future();
+
+    // Websocket client
+    auto wsClient = drogon::WebSocketClient::newWebSocketClient(TRANSCODER_WEBSOCKET_URL);
+
+    // Recv message
+    wsClient->setMessageHandler([&](const std::string& message,
+                                    const drogon::WebSocketClientPtr& wsPtr,
+                                    const drogon::WebSocketMessageType& type) {
+        std::cout << "Received message: " << message << std::endl;
+        Json::Value json;
+        jsonParse(message, &json);
+        if (json["type"].asString() == "file_list" && !json["file_list"].empty()) {
+            // HTTP client
+            auto client = drogon::HttpClient::newHttpClient(TRANSCODER_HTTP_URL);
+#ifdef __linux__
+            client->setSockOptCallback([](int fd) {
+                int optval = 10;
+                ::setsockopt(fd, SOL_TCP, TCP_KEEPCNT, &optval, static_cast<socklen_t>(sizeof optval));
+                ::setsockopt(fd, SOL_TCP, TCP_KEEPIDLE, &optval, static_cast<socklen_t>(sizeof optval));
+                ::setsockopt(fd, SOL_TCP, TCP_KEEPINTVL, &optval, static_cast<socklen_t>(sizeof optval));
+            });
+#endif
+            std::cout << "Download file: " << json["file_list"][0].asString() << std::endl;
+            Json::Value requestJson;
+            requestJson["file"] = json["file_list"][0].asString();
+            std::cout << "requestJson: " << requestJson << std::endl;
+
+            auto req = drogon::HttpRequest::newHttpJsonRequest(requestJson);
+            req->setPath("/transcode");
+            req->setMethod(drogon::Get);
+            req->addHeader("TRSession", json["session_id"].asString());
+
+            client->sendRequest(req, [&, requestJson](drogon::ReqResult result, const drogon::HttpResponsePtr& response) {
+                if (result == drogon::ReqResult::Ok) {
+                    if (response->getStatusCode() != drogon::k200OK) {
+                        std::cerr << "Download failed Status code: " << response->getStatusCode() << std::endl;
+                        std::cerr << "Download failed Error Message: " << response->body() << std::endl;
+                        promise.set_value(false);
+                    } else {
+                        auto body = response->getBody();
+                        std::ofstream file(requestJson["file"].asString(), std::ios::binary);
+                        if (file.is_open() == false) {
+							std::cerr << "Failed to open file" << std::endl;
+							promise.set_value(false);
+							return;
+						}
+                        file.write(body.data(), body.size());
+                        file.close();
+                        std::cout << "file download success!" << std::endl;
+                        promise.set_value(true);
+                    }
+                } else {
+                    std::cout << "file download failed" << std::endl;
+                    promise.set_value(false);
+                }
+            });
+        } else if (json["type"].asString() == "connect") {
+            Json::Value requestJson;
+            requestJson["task"] = "file_list";
+            requestJson["session_id"] = json["session_id"].asString();
+            requestJson["transcoded"] = true;
+            wsPtr->getConnection()->sendJson(requestJson);
+        } else {
+            promise.set_value(false);
+        }
     });
 
     // HTTP Request

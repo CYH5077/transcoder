@@ -1,5 +1,7 @@
 #include "http/HTTPFileHandler.hpp"
 
+#include "server/Config.hpp"
+
 namespace tr {
     void HTTPFileHandler::upload(const drogon::HttpRequestPtr& req,
                                  std::function<void(const drogon::HttpResponsePtr&)>&& callback) {
@@ -40,6 +42,27 @@ namespace tr {
 
     void HTTPFileHandler::download(const drogon::HttpRequestPtr& req,
                                    std::function<void(const drogon::HttpResponsePtr&)>&& callback) {
+        this->downloadFile(Config::getInstance().getUploadDir(), req, std::move(callback));
+    }
+
+    void HTTPFileHandler::transcodeDownload(const drogon::HttpRequestPtr& req,
+                                            std::function<void(const drogon::HttpResponsePtr&)>&& callback) {
+        this->downloadFile(Config::getInstance().getTranscodeDir(), req, std::move(callback));
+    }
+
+    void HTTPFileHandler::option(const drogon::HttpRequestPtr& req,
+                                 std::function<void(const drogon::HttpResponsePtr&)>&& callback) {
+        auto resp = drogon::HttpResponse::newHttpResponse();
+        resp->setStatusCode(drogon::k204NoContent);
+        resp->addHeader("Access-Control-Allow-Origin", "http://125.177.14.20:10000");
+        resp->addHeader("Access-Control-Allow-Methods", "POST, OPTIONS");
+        resp->addHeader("Access-Control-Allow-Headers", "Content-Type");
+        callback(resp);
+    }
+
+    void HTTPFileHandler::downloadFile(const std::string& path,
+                                       const drogon::HttpRequestPtr& req,
+                                       std::function<void(const drogon::HttpResponsePtr&)>&& callback) {
         // URL에서 파일 이름 파라미터 추출
         // req body에서 json을 파싱한다.파싱한다
         auto requestJson = req->getJsonObject();
@@ -58,8 +81,8 @@ namespace tr {
             return;
         }
 
-        // 파일 경로 설정 
-        std::string filePath = drogon::app().getUploadPath() + "/" + fileName;
+        // 파일 경로 설정
+        std::string filePath = path + "/" + fileName;
 
         // 파일 존재 여부 확인
         if (!std::filesystem::exists(filePath)) {
@@ -72,16 +95,6 @@ namespace tr {
 
         // 파일 응답 생성
         auto resp = drogon::HttpResponse::newFileResponse(filePath);
-        callback(resp);
-    }
-
-    void HTTPFileHandler::option(const drogon::HttpRequestPtr& req,
-                                 std::function<void(const drogon::HttpResponsePtr&)>&& callback) {
-        auto resp = drogon::HttpResponse::newHttpResponse();
-        resp->setStatusCode(drogon::k204NoContent);
-        resp->addHeader("Access-Control-Allow-Origin", "http://125.177.14.20:10000");
-        resp->addHeader("Access-Control-Allow-Methods", "POST, OPTIONS");
-        resp->addHeader("Access-Control-Allow-Headers", "Content-Type");
         callback(resp);
     }
 };  // namespace tr

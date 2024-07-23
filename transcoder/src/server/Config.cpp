@@ -11,13 +11,18 @@ namespace tr {
         return Config::instance;
     }
 
-    Config::Config() : port(DEFAULT_PORT), threadNum(std::thread::hardware_concurrency()) {}
+    Config::Config()
+        : port(DEFAULT_PORT),
+          threadNum(std::thread::hardware_concurrency()),
+          transcodeDir("./transcode"),
+          uploadDir("./upload") {}
 
     Config::~Config() {}
 
     bool Config::parse(int argc, char* argv[]) {
-        tr::ArgParser::setFlagInt("-p", "port", &Config::instance.port);
-        tr::ArgParser::setFlagInt("-t", "thread number", &Config::instance.threadNum);
+        tr::ArgParser::setFlagInt("p", "port", &Config::instance.port);
+        tr::ArgParser::setFlagInt("t", "thread number", &Config::instance.threadNum);
+        tr::ArgParser::setFlagString("transcodeDir", "transcode directory", &Config::instance.transcodeDir);
 
         if (tr::ArgParser::parse(argc, argv) == false) {
             return false;
@@ -41,4 +46,13 @@ namespace tr {
     int Config::getThreadNum() {
         return Config::instance.threadNum;
     }
+
+    std::string Config::getTranscodeDir() {
+        return this->transcodeDir;
+    }
+
+    std::string Config::getUploadDir() {
+        return this->uploadDir;
+    }
+
 }  // namespace tr

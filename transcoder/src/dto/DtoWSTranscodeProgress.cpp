@@ -27,6 +27,7 @@ namespace tr {
     DtoWSTranscodeProgressPtr DtoWSTranscodeProgress::createFinishMessage(const std::string& outputFile) {
         DtoWSTranscodeProgressPtr finish = std::make_shared<DtoWSTranscodeProgress>();
         finish->addJson("result", "finish");
+        finish->addJson("output", outputFile);
         return finish;
     }
 

@@ -11,10 +11,12 @@ namespace tr {
         static Config instance;
 
     public:
-        static bool parse(int argc, char* argv[]);
+        bool parse(int argc, char* argv[]);
 
-        static int getPort();
-        static int getThreadNum();
+        int getPort();
+        int getThreadNum();
+        std::string getTranscodeDir();
+        std::string getUploadDir();
 
     private:
         explicit Config();
@@ -23,5 +25,8 @@ namespace tr {
     private:
         int port;
         int threadNum;
+
+        std::string uploadDir;
+        std::string transcodeDir;
     };
 }

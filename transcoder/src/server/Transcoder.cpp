@@ -21,7 +21,7 @@ namespace tr {
     void Transcoder::printServerInfo() {
         std::cout << "==========================================" << std::endl;
         std::cout << "= Transcoder Server Start                 " << std::endl;
-        std::cout << "= Port: " << Config::getPort() << std::endl;
+        std::cout << "= Port: " << Config::getInstance().getPort() << std::endl;
         std::cout << "==========================================" << std::endl;
     }
 
@@ -42,11 +42,11 @@ namespace tr {
         });
 
         drogon::app()
-            .setUploadPath("./upload")
+            .setUploadPath(Config::getInstance().getUploadDir())
             .setClientMaxBodySize(10 * 1024 * 1024 * 1024LL)  // 10GB ���� ���ε� ����
             .setClientMaxMemoryBodySize(1 * 1024 * 1024)      // 1MB �޸� ��� ����
-            .addListener("0.0.0.0", Config::getPort())
-            .setThreadNum(Config::getThreadNum())
+            .addListener("0.0.0.0", Config::getInstance().getPort())
+            .setThreadNum(Config::getInstance().getThreadNum())
             .run();
     }
 

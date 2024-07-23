@@ -1,6 +1,7 @@
 #include "http/ws_recv_handler/WSFileListTask.hpp"
 
 #include "dto/DtoWSErrorResponse.hpp"
+#include "server/Config.hpp"
 
 namespace tr {
     WSFileListTask::WSFileListTask() : WSRequestTaskInterface("file_list") {}
@@ -9,13 +10,14 @@ namespace tr {
         auto request = DtoWSFileListRequest::create();
         if (request->parseJson(json) == false) {
             client->sendResponse(DtoWSErrorResponse::createErrorMessage("Invalid request"));
-			return;
+            return;
         }
 
-        std::string path = drogon::app().getUploadPath();
-        std::vector<std::string> fileList;
+        std::string path = request->isTranscodedFileList() ? Config::getInstance().getTranscodeDir()
+                                                           : Config::getInstance().getUploadDir();
 
         try {
+            std::vector<std::string> fileList;
             for (const auto& entry : std::filesystem::directory_iterator(path)) {
                 if (std::filesystem::is_regular_file(entry.status())) {
                     fileList.push_back(entry.path().filename().string());
