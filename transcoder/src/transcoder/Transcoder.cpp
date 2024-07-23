@@ -1,6 +1,7 @@
 #include "transcoder/Transcoder.hpp"
 
 #include <filesystem>
+#include <thread>
 
 #include "dto/DtoWSErrorResponse.hpp"
 #include "dto/DtoWSTranscodeProgress.hpp"
@@ -23,11 +24,25 @@ namespace tr {
             this->client->sendResponse(DtoWSErrorResponse::createErrorMessage(error.getMessage()));
             return;
         }
+
         auto videoEncodeParameters = parameter.getVideoEncodeParameters();
         auto audioEncodeParameters = parameter.getAudioEncodeParameters();
-        videoEncodeParameters->setEncodeThreadCount(16);
+        this->videoRequestToVideoParameter(request, videoEncodeParameters);
+        this->audioRequestToAudioParameter(request, audioEncodeParameters);
+        videoEncodeParameters->setMaxBFrames(10);
+        videoEncodeParameters->setEncodeThreadCount(std::thread::hardware_concurrency());
 
-        error = parameter.createEncodeCodecContext(ff::VIDEO_CODEC::H264, ff::AUDIO_CODEC::AAC);
+        ff::VIDEO_CODEC videoCodec = request->getVideoCodec();
+        if (videoCodec == ff::VIDEO_CODEC::NONE) {
+            videoCodec = ff::VIDEO_CODEC::H264;
+        }
+
+        ff::AUDIO_CODEC audioCodec = request->getAudioCodec();
+        if (audioCodec == ff::AUDIO_CODEC::NONE) {
+            audioCodec = ff::AUDIO_CODEC::AAC;
+        }
+
+        error = parameter.createEncodeCodecContext(videoCodec, audioCodec);
         if (error.getType() != ff::AV_ERROR_TYPE::SUCCESS) {
             this->client->sendResponse(DtoWSErrorResponse::createErrorMessage(error.getMessage()));
             return;
@@ -46,6 +61,7 @@ namespace tr {
         int decodeCount = 0;
         int max = parameter.getInputContext().getFrameCount();
 
+        // Decode Callback
         auto startTime = std::chrono::system_clock::now();
         transcoder.setDecodeCallback([&](ff::FFAVFrame&) {
             decodeCount++;
@@ -57,9 +73,14 @@ namespace tr {
             }
         });
 
-        transcoder.setFinishCallback(
-            [&]() { this->client->sendResponse(DtoWSTranscodeProgress::createProgressMessage(decodeCount, max)); });
+        // Finish Callback
+        transcoder.setFinishCallback([&]() {
+            this->client->sendResponse(DtoWSTranscodeProgress::createProgressMessage(decodeCount, max));
+            client->setTranscodeState(TRANSCODE_STATE::NONE);
+            client->sendResponse(DtoWSTranscodeProgress::createFinishMessage(outputFile));
+        });
 
+        // Error Callback
         transcoder.setErrorCallback([&](ff::ERROR_TYPE type, ff::AVError& error) {
             std::cout << error.getMessage() << " " << error.getAVErrorMessage() << std::endl;
             client->sendResponse(DtoWSErrorResponse::createErrorMessage(error.getMessage()));
@@ -70,4 +91,35 @@ namespace tr {
 
         transcoder.transcode(transcodeDir + "/" + outputFile);
     }
+
+    void Transcoder::videoRequestToVideoParameter(DtoWSTranscodeRequestPtr request,
+                                                  ff::FFAVVideoEncodeParametersPtr parameter) {
+        if (request->getVideoBitrate() > 0) {
+            parameter->setBitrate(request->getVideoBitrate());
+        }
+
+        if (request->getVideoWidth() > 0) {
+            parameter->setWidth(request->getVideoWidth());
+        }
+
+        if (request->getVideoHeight() > 0) {
+            parameter->setHeight(request->getVideoHeight());
+        }
+
+        if (request->getVideoGopSize() > 0) {
+            parameter->setGOPSize(request->getVideoGopSize());
+        }
+    }
+
+    void Transcoder::audioRequestToAudioParameter(DtoWSTranscodeRequestPtr request,
+                                                  ff::FFAVAudioEncodeParametersPtr parameter) {
+        if (request->getAudioBitrate() > 0) {
+            parameter->setBitrate(request->getAudioBitrate());
+        }
+
+        if (request->getAudioSampleRate() > 0) {
+            parameter->setSampleRate(request->getAudioSampleRate());
+        }
+    }
+
 }  // namespace tr

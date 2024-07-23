@@ -41,7 +41,12 @@ namespace tr {
             chain();
         });
 
+        std::filesystem::create_directory("./log");
+
         drogon::app()
+            .setLogPath("./log")
+            .setLogLevel(trantor::Logger::kInfo)
+            .setLogLocalTime(true)
             .setUploadPath(Config::getInstance().getUploadDir())
             .setClientMaxBodySize(10 * 1024 * 1024 * 1024LL)  // 10GB ���� ���ε� ����
             .setClientMaxMemoryBodySize(1 * 1024 * 1024)      // 1MB �޸� ��� ����

@@ -357,30 +357,51 @@ void wsRequestTranscode() {
     wsClient->setMessageHandler([&](const std::string& message,
                                     const drogon::WebSocketClientPtr& wsPtr,
                                     const drogon::WebSocketMessageType& type) {
-        std::cout << "Received message: " << message << std::endl;
-        Json::Value json;
-        jsonParse(message, &json);
+        std::cout << "Received message: " << message << "  " << message.length() << std::endl;
 
-        static int finishCount = 0;
-        if (json["result"].asString() == "finish") {
-            finishCount++;
-            if (finishCount >= 3) {
-                promise.set_value(true);
+        if (type == drogon::WebSocketMessageType::Ping) {
+            std::cout << "recv ping" << std::endl;
+        } else if (type == drogon::WebSocketMessageType::Pong) {
+            std::cout << "recv pong" << std::endl;
+        }
+        
+        if (type == drogon::WebSocketMessageType::Text) {
+            Json::Value json;
+            jsonParse(message, &json);
+
+            static int finishCount = 0;
+            if (json["result"].asString() == "finish") {
+                finishCount++;
+                if (finishCount >= 3) {
+                    promise.set_value(true);
+                }
+            } else if (json["type"].asString() == "error") {
+                promise.set_value(false);
+            } else if (json["type"].asString() == "connect") {
+                Json::Value requestJson;
+                requestJson["task"] = "transcode";
+                requestJson["file"] = SAMPLE_MP4;
+                requestJson["session_id"] = json["session_id"];
+
+                Json::Value h265_1024_960_json = requestJson;
+                h265_1024_960_json["video_codec"] = "h265";
+                h265_1024_960_json["width"] = 1024;
+                h265_1024_960_json["height"] = 960;
+                h265_1024_960_json["output"] = "output_h265_1024_960.mp4";
+                wsPtr->getConnection()->sendJson(h265_1024_960_json);
+
+                Json::Value h264_bitrate_200k_json = requestJson;
+                h264_bitrate_200k_json["video_codec"] = "h264";
+                h264_bitrate_200k_json["bitrate"] = 200000;
+                h264_bitrate_200k_json["output"] = "output_h264_bitrate_200k.mp4";
+                wsPtr->getConnection()->sendJson(h264_bitrate_200k_json);
+
+                Json::Value h265_ac3_json = requestJson;
+                h265_ac3_json["video_codec"] = "h265";
+                h265_ac3_json["audio_codec"] = "acc";
+                h265_ac3_json["output"] = "output_h265_acc.mp4";
+                wsPtr->getConnection()->sendJson(h265_ac3_json);
             }
-        } else if (json["type"].asString() == "error") {
-            promise.set_value(false);
-        } else if (json["type"].asString() == "connect") {
-            Json::Value requestJson;
-            requestJson["task"] = "transcode";
-            requestJson["file"] = SAMPLE_MP4;
-            requestJson["session_id"] = json["session_id"];
-
-            requestJson["output"] = "output.mp4";
-            wsPtr->getConnection()->sendJson(requestJson);
-            requestJson["output"] = "output.ts";
-            wsPtr->getConnection()->sendJson(requestJson);
-            requestJson["output"] = "output.avi";
-            wsPtr->getConnection()->sendJson(requestJson);
         }
     });
 
@@ -395,6 +416,7 @@ void wsRequestTranscode() {
                                   const drogon::WebSocketClientPtr& wsPtr) {
                                   if (result == drogon::ReqResult::Ok) {
                                       std::cout << "Connected to server" << std::endl;
+                                      wsPtr->getConnection()->setPingMessage("", std::chrono::seconds(2));
                                   } else {
                                       promise.set_value(false);
                                       std::cerr << "Failed to connect to server" << std::endl;
@@ -442,30 +464,31 @@ void wsRequestTranscodedFileListAndDownload() {
             req->setMethod(drogon::Get);
             req->addHeader("TRSession", json["session_id"].asString());
 
-            client->sendRequest(req, [&, requestJson](drogon::ReqResult result, const drogon::HttpResponsePtr& response) {
-                if (result == drogon::ReqResult::Ok) {
-                    if (response->getStatusCode() != drogon::k200OK) {
-                        std::cerr << "Download failed Status code: " << response->getStatusCode() << std::endl;
-                        std::cerr << "Download failed Error Message: " << response->body() << std::endl;
-                        promise.set_value(false);
+            client->sendRequest(
+                req, [&, requestJson](drogon::ReqResult result, const drogon::HttpResponsePtr& response) {
+                    if (result == drogon::ReqResult::Ok) {
+                        if (response->getStatusCode() != drogon::k200OK) {
+                            std::cerr << "Download failed Status code: " << response->getStatusCode() << std::endl;
+                            std::cerr << "Download failed Error Message: " << response->body() << std::endl;
+                            promise.set_value(false);
+                        } else {
+                            auto body = response->getBody();
+                            std::ofstream file(requestJson["file"].asString(), std::ios::binary);
+                            if (file.is_open() == false) {
+                                std::cerr << "Failed to open file" << std::endl;
+                                promise.set_value(false);
+                                return;
+                            }
+                            file.write(body.data(), body.size());
+                            file.close();
+                            std::cout << "file download success!" << std::endl;
+                            promise.set_value(true);
+                        }
                     } else {
-                        auto body = response->getBody();
-                        std::ofstream file(requestJson["file"].asString(), std::ios::binary);
-                        if (file.is_open() == false) {
-							std::cerr << "Failed to open file" << std::endl;
-							promise.set_value(false);
-							return;
-						}
-                        file.write(body.data(), body.size());
-                        file.close();
-                        std::cout << "file download success!" << std::endl;
-                        promise.set_value(true);
+                        std::cout << "file download failed" << std::endl;
+                        promise.set_value(false);
                     }
-                } else {
-                    std::cout << "file download failed" << std::endl;
-                    promise.set_value(false);
-                }
-            });
+                });
         } else if (json["type"].asString() == "connect") {
             Json::Value requestJson;
             requestJson["task"] = "file_list";

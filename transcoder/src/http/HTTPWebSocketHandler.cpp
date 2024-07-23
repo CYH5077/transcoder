@@ -29,8 +29,6 @@ namespace tr {
             } else {
                 client->sendResponse(DtoWSErrorResponse::createErrorMessage("Invalid JSON format: " + errors));
             }
-        } else {
-            conn->forceClose();
         }
     }
 
